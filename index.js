@@ -14,7 +14,8 @@ app.use( express.json() )
 app.use( express.urlencoded( { extended: false } ) )
 
 
-app.use('/waitlist',require('./routes/waitlist'))
+app.use( '/waitlist', require( './routes/waitlist' ) )
+app.use('/verify-mail', require('./routes/verify'))
 
 
 
