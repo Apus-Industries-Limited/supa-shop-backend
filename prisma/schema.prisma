@@ -19,3 +19,14 @@ model Waitlist{
   email String @unique
   isSubscribed Boolean @default(true)
 }
+
+model User{
+  id String @id @default(uuid())
+  name String
+  email String @unique
+  phone_number String
+  password String
+  verification_code Int
+  isVerified Boolean @default(false)
+  refresh_token String[]
+}
