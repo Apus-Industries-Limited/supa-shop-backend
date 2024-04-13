@@ -24,9 +24,11 @@ model User{
   id String @id @default(uuid())
   name String
   email String @unique
+  username String @unique
   phone_number String
   password String
-  verification_code Int
+  verification_code String?
   isVerified Boolean @default(false)
   refresh_token String[]
+  address String[]
 }

@@ -1,7 +1,9 @@
 const { PrismaClient, Prisma } = require( '@prisma/client' );
-const nodemailer = require('nodemailer')
+const { sendMail } = require( '../utils/mail' );
 
 const prisma = new PrismaClient();
+const date = new Date
+const year = date.getFullYear()
 
 const joinWaitlist = async (req,res) =>
 {
@@ -13,6 +15,88 @@ const joinWaitlist = async (req,res) =>
                         email
                   }
             } )
+
+            const html = `
+                  <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thanks for Joining the Waitlist!</title>
+  <style>
+    /* Basic styles */
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 0;
+      color: #fff;
+      background-color: #ff7900;
+    }
+    .container {
+      padding: 20px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    /* Header styles */
+    header {
+      text-align: center;
+    }
+    h1 {
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+    img {
+      width: 150px;
+      height: auto;
+      margin: 0 auto;
+      display: block;
+    }
+    /* Body styles */
+    p {
+      line-height: 1.5;
+    }
+    .cta {
+      text-align: center;
+      margin-top: 20px;
+    }
+    a {
+      background-color: #333;
+      color: white;
+      padding: 10px 15px;
+      text-decoration: none;
+      border-radius: 5px;
+    }
+    /* Footer styles */
+    footer {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 12px;
+      color: #aaa;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Thanks for Joining the Waitlist for SupaShop!</h1>
+    </header>
+    <p>Hi,</p>
+    <p>We're thrilled you're interested in SupaShop! You're now on the waitlist and will be among the first to be notified when it becomes available.</p>
+    <p>In the meantime, you can learn more about SupaShop by visiting our product page</p>
+    <p>We'll send you an email as soon as SupaShop has successfully be launched and fit for use. Don't miss out!</p>
+    <div class="cta">
+      <a href="https://supashop.co/213edaq3ew2">Learn More About SupaShop</a>
+    </div>
+    <footer>
+      <p>&#169; SupaShop ${year}</p>
+    </footer>
+  </div>
+</body>
+</html>
+            `
+            const subject = "Wailtist subscription"
+            const from = `Supashop Support<${process.env.EMAIL}>`
+            await sendMail(from,email,subject,html)
             return res.status(201).json({message:"You have successfully joined supashop customer waitlist. Stay tuned for updates on your mail."})
       } catch (e) {
             if ( e instanceof Prisma.PrismaClientKnownRequestError ) {
