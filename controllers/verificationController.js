@@ -1,26 +1,25 @@
-const { PrismaClient } = require( '@prisma/client' );
+const { PrismaClient } = require("@prisma/client");
 const randomString = require("crypto-random-string");
-const { sendMail } = require( '../utils/mail' );
+const { sendMail } = require("../utils/mail");
 
 const prisma = new PrismaClient();
 
-const verificationMail = async ( req, res ) =>
-{
-      try {
-            const { email } = req.params;
-            if (!email) return res.status(400).json({message: "Email is required"});
-            
-            // Checking if the user
-            const user = await prisma.user.findUnique( {
-                  where: {
-                  email
-                  }
-            } )
-            
-            if ( !user ) return res.status( 404 ).json( { message: "User not found" } )
+const verificationMail = async (req, res) => {
+  try {
+    const { email } = req.params;
+    if (!email) return res.status(400).json({ message: "Email is required" });
 
-            const code = randomString( { length: 6, type: "numeric" } );
-            const html = `
+    // Checking if the user
+    const user = await prisma.user.findUnique({
+      where: {
+        email,
+      },
+    });
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const code = randomString({ length: 6, type: "numeric" });
+    const html = `
                   <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -76,56 +75,56 @@ const verificationMail = async ( req, res ) =>
   </div>
 </body>
 </html>
-            `
-            const subject = "Verify your account SupaShop!"
-            const from = `Supashop Support<${process.env.EMAIL}>`
+            `;
+    const subject = "Verify your account SupaShop!";
+    const from = `Supashop Support<${process.env.EMAIL}>`;
 
-            await prisma.user.update( {
-                  where: { email },
-                  data: {
-                        verification_code: code,
-                  }
-            } )
-            
-            await sendMail(from,email,subject,html)
-            res.status(200).json({message:"Verification mail has been sent"})
-            
-      } catch (error) {
-            console.error( error )
-            return res.status(500).json({message:error})
-      }setTimeout( async () =>
-        {
-              await prisma.user.update( {
-                    where: { email },
-                    data: {
-                          verification_code: ""
-                    }
-              } )
-        }, 900000)
-        await prisma.$disconnect()
+    await prisma.user.update({
+      where: { email },
+      data: {
+        verification_code: code,
+      },
+    });
+
+    await sendMail(from, email, subject, html);
+    res.status(200).json({ message: "Verification mail has been sent" });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: error });
+  }
+  setTimeout(async () => {
+    await prisma.user.update({
+      where: { email },
+      data: {
+        verification_code: "",
+      },
+    });
+  }, 900000);
+  await prisma.$disconnect();
 };
 
-const verifyCode = async ( req, res ) =>
-{
-      try {
-            const { code, email } = req.body;
-            if ( !email || !code ) return res.status( 400 ).json( { message: "All field is required" } );
-            
-            const user = await prisma.user.findUnique( { where: { email } } )
-            if ( !user ) return res.status( 404 ).json( { message: "User not found" } )
+const verifyCode = async (req, res) => {
+  try {
+    const { code, email } = req.body;
+    if (!email || !code)
+      return res.status(400).json({ message: "All field is required" });
 
-            if ( user.verification_code !== code ) return res.status( 400 ).json( { message: 'Invalid Verification code' } )
-            
-            await prisma.user.update( {
-                  where: {
-                        email
-                  },
-                  data: {
-                        isVerified: true,
-                        verification_code: null
-                  }
-            } )
-            const html = `
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    if (user.verification_code !== code)
+      return res.status(400).json({ message: "Invalid Verification code" });
+
+    await prisma.user.update({
+      where: {
+        email,
+      },
+      data: {
+        isVerified: true,
+        verification_code: null,
+      },
+    });
+    const html = `
                   <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -175,19 +174,20 @@ const verifyCode = async ( req, res ) =>
   </div>
 </body>
 </html>
-            `
-            const subject = "Verification Successful!"
-            const from = `Supashop Support<${ process.env.EMAIL }>`
-            
-            await sendMail(from,email,subject,html)
-            return res.status(202).json({message:"User has been verified successfully"})
-      } catch (error) {
-            console.error( error )
-            return res.status(500).json({message:error})
-      }finally {
-            await prisma.$disconnect()
-      }
-}
+            `;
+    const subject = "Verification Successful!";
+    const from = `Supashop Support<${process.env.EMAIL}>`;
 
+    await sendMail(from, email, subject, html);
+    return res
+      .status(202)
+      .json({ message: "User has been verified successfully" });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: error });
+  } finally {
+    await prisma.$disconnect();
+  }
+};
 
-module.exports={verificationMail,verifyCode}
+module.exports = { verificationMail, verifyCode };
