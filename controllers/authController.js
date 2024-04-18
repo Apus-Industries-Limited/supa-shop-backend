@@ -298,7 +298,7 @@ const resetPassword = async (req, res) => {
     if (!user) {
       return res
         .status(400)
-        .json({ message: "Invalid or expired reset token1" });
+        .json({ message: "Invalid or expired reset token" });
     }
 
     const hashedPassword = await argon.hash(password);

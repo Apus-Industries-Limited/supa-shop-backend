@@ -10,3 +10,4 @@ router.get("/:email", verificationMail);
 router.post("/", verifyCode);
 
 module.exports = router;
+
