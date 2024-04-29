@@ -17,6 +17,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
+
+app.get("/", (req, res) => res.send("Express on Vercel"));
 app.use( '/waitlist', require( './routes/waitlist' ) )
 app.use('/refresh',require("./routes/refresh"))
 app.use( '/auth', require( "./routes/auth" ) )
