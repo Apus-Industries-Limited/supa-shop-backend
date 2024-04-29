@@ -1,4 +1,5 @@
-require("dotenv").config()
+require( "dotenv" ).config()
+const compression = require("compression")
 const express = require( 'express' );
 const cors = require( 'cors' );
 const credentials = require( "./middleware/credentials" );
@@ -10,6 +11,8 @@ const swaggerUi = require("swagger-ui-express")
 const PORT = process.env.PORT || 3500;
 const app = express();
 
+app.use(compression())
+
 // Middlewares
 app.use(credentials);
 app.use(cors());
@@ -18,7 +21,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
 
-app.get("/", (req, res) => res.send("Express on Vercel"));
+app.get("/", (req, res) => res.send("supa shop api"));
 app.use( '/waitlist', require( './routes/waitlist' ) )
 app.use('/refresh',require("./routes/refresh"))
 app.use( '/auth', require( "./routes/auth" ) )

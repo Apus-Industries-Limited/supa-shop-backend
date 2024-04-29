@@ -19,6 +19,7 @@ CREATE TABLE "User" (
     "isVerified" BOOLEAN NOT NULL DEFAULT false,
     "refresh_token" TEXT[],
     "address" TEXT[],
+    "resetPasswordToken" TEXT,
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
 );
