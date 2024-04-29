@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon index",
-    "start": "node index"
+    "start": "prisma db push && node index"
   },
   "keywords": [],
   "author": "",
@@ -15,6 +15,7 @@
     "@prisma/client": "5.12.1",
     "argon2": "^0.40.1",
     "axos": "^0.0.1",
+    "compression": "^1.7.4",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "crypto-random-string": "^3.3.1",
