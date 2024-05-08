@@ -1,17 +1,17 @@
-require( "dotenv" ).config()
+require("dotenv").config();
 const compression = require("compression")
-const express = require( 'express' );
-const cors = require( 'cors' );
-const credentials = require( "./middleware/credentials" );
-const verifyJwt = require( "./middleware/verifyJWT" )
-const cookieParser = require( 'cookie-parser' )
-const swaggerJsdoc = require( "swagger-jsdoc" )
-const swaggerUi = require("swagger-ui-express")
+const express = require("express");
+const cors = require("cors");
+const credentials = require("./middleware/credentials");
+const { verifyJwt } = require("./middleware/auth");
+const cookieParser = require("cookie-parser");
+const swaggerJsdoc = require("swagger-jsdoc");
+const swaggerUi = require("swagger-ui-express");
 
 const PORT = process.env.PORT || 3500;
 const app = express();
 
-app.use(compression())
+app.use(compression());
 
 // Middlewares
 app.use(credentials);
@@ -20,14 +20,13 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
-
 app.get("/", (req, res) => res.send("supa shop api"));
-app.use( '/waitlist', require( './routes/waitlist' ) )
-app.use('/refresh',require("./routes/refresh"))
-app.use( '/auth', require( "./routes/auth" ) )
-app.use('/logout', require('./routes/logout'))
-app.use( '/verify-mail', require( './routes/verify' ) )
-
+app.use("/waitlist", require("./routes/waitlist"));
+app.use("/refresh", require("./routes/refresh"));
+app.use("/auth", require("./routes/auth"));
+app.use("/logout", require("./routes/logout"));
+app.use("/product", require("./routes/product"));
+app.use("/verify-mail", require("./routes/verify"));
 
 // Routes which requires authorization
 // app.use(verifyJwt);
