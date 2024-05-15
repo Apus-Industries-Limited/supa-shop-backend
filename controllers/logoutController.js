@@ -3,7 +3,29 @@ const { PrismaClient } = require( '@prisma/client' );
 
 const prisma = new PrismaClient();
 
-
+/**
+ * @swagger
+ * /logout:
+ *   get:
+ *     summary: Log out the user
+ *     tags: [Auth]
+ *     responses:
+ *       204:
+ *         description: No Content - Successfully logged out or no refresh token in cookies
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: internal server error
+ *                 error:
+ *                   type: string
+ *                   example: Error details
+ */
 const logout = async ( req, res ) =>
 {
       try {

@@ -4,6 +4,62 @@ const { sendMail } = require("../utils/mail");
 
 const prisma = new PrismaClient();
 
+/**
+ * @swagger
+ * /verify-mail/{email}:
+ *   get:
+ *     summary: Send a verification email
+ *     tags: [Auth]
+ *     parameters:
+ *       - in: path
+ *         name: email
+ *         schema:
+ *           type: string
+ *           format: email
+ *         required: true
+ *         description: User's email address to send the verification code
+ *     responses:
+ *       200:
+ *         description: Verification mail has been sent
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Verification mail has been sent
+ *       400:
+ *         description: Email is required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Email is required
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: User not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Error details
+ */
 const verificationMail = async (req, res) => {
   try {
     const { email } = req.params;
@@ -103,6 +159,71 @@ const verificationMail = async (req, res) => {
   await prisma.$disconnect();
 };
 
+/**
+ * @swagger
+ * /verify-mail:
+ *   post:
+ *     summary: Verify user's email with a verification code
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - code
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: user@example.com
+ *               code:
+ *                 type: string
+ *                 example: 123456
+ *     responses:
+ *       202:
+ *         description: User has been verified successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: User has been verified successfully
+ *       400:
+ *         description: Bad request - Missing email or code, or invalid verification code
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: All field is required or Invalid Verification code
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: User not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Internal server error
+ */
 const verifyCode = async (req, res) => {
   try {
     const { code, email } = req.body;

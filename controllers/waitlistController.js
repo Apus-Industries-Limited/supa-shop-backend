@@ -5,6 +5,70 @@ const prisma = new PrismaClient();
 const date = new Date();
 const year = date.getFullYear();
 
+/**
+ * @swagger
+ * /waitlist:
+ *   post:
+ *     summary: Join the waitlist
+ *     tags: [Waitlist]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: user@example.com
+ *     responses:
+ *       201:
+ *         description: Successfully joined the waitlist
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: You have successfully joined supashop customer waitlist. Stay tuned for updates on your mail.
+ *       400:
+ *         description: Invalid email
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Enter a valid email
+ *       409:
+ *         description: Email already exists
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Email already exist
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: internal server error
+ *                 error:
+ *                   type: string
+ *                   example: Error details
+ */
 const joinWaitlist = async (req, res) => {
   try {
     const { email } = req.body;

@@ -1,4 +1,5 @@
-const { PrismaClient, Prisma } = require("@prisma/client");
+const { PrismaClient, Prisma } = require( "@prisma/client" );
+const jwt = require("jsonwebtoken")
 
 const prisma = new PrismaClient();
 
@@ -80,7 +81,7 @@ const listProducts = async (req, res) => {
     const count = await prisma.product.count();
     const products = await prisma.product.findMany({
       skip: +req.query.skip || 0,
-      take: 5,
+      take: 10,
     });
 
     res.status(200).json({
@@ -98,9 +99,11 @@ const listProducts = async (req, res) => {
 
 const getProductById = async (req, res) => {
   try {
+    const {id} = req.params
     const product = await prisma.product.findFirstOrThrow({
-      where: { id: req.params.id },
-    });
+      where: { id },
+    } );
+    
     res.status(200).json({
       product,
     });
@@ -117,10 +120,99 @@ const getProductById = async (req, res) => {
   }
 };
 
+
+const getMerchantProduct = async ( req, res ) =>
+{
+  try {
+    const cookies = req.cookies;
+    if ( !cookies?.refreshToken ) return res.sendStatus( 401 );
+    const token = cookies.refreshToken
+    let id;
+    const foundUser = await prisma.merchant.findFirst( {
+      where: {
+            refresh_token: {
+            has: token
+      }
+      }
+    } )
+    if ( !foundUser ) return res.sendStatus( 403 );
+
+    jwt.verify( token, process.env.REFRESH_TOKEN_SECRET, async ( err, decoded ) =>
+    {
+      if ( err || foundUser.email !== decoded.email ) return res.status( 403 );
+      id = foundUser.id
+      const product = await prisma.product.findMany({
+        where: { merchantId: id },
+        skip: +req.query.skip || 0,
+        take: 10,
+      });
+      res.status(200).json({
+        product,
+      });
+    })
+
+    
+  } catch (e) {
+    if (e instanceof PrismaInstance.PrismaClientKnownRequestError) {
+      if (e.code === "P2025")
+        return res.status(404).json({ message: "Product not found" });
+    }
+    return res
+      .status(500)
+      .json({ message: "internal server error", error: e.message });
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+const getSingleProductMerchant = async ( req, res ) =>
+{
+  try {
+    const cookies = req.cookies;
+    const { id } = req.params;
+    let userId;
+    if ( !cookies?.refreshToken ) return res.sendStatus( 401 );
+    const token = cookies.refreshToken;
+    const foundUser = await prisma.merchant.findFirst( {
+      where: {
+        refresh_token: {
+          has: token
+        }
+      }
+    } );
+    if ( !foundUser ) return res.sendStatus( 403 );
+
+    jwt.verify( token, process.env.REFRESH_TOKEN_SECRET, async ( err, decoded ) =>
+    {
+      if ( err || foundUser.email !== decoded.email ) return res.status( 403 );
+      userId = foundUser.id;
+      const product = await prisma.product.findFirstOrThrow( {
+        where: { merchantId: userId, id }
+      } );
+      res.status( 200 ).json( {
+        product,
+      } );
+    } );
+
+  } catch (e) {
+    if (e instanceof PrismaInstance.PrismaClientKnownRequestError) {
+      if (e.code === "P2025")
+        return res.status(404).json({ message: "Product not found" });
+    }
+    return res
+      .status(500)
+      .json({ message: "internal server error", error: e.message });
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
 module.exports = {
   createProduct,
   getProductById,
   deleteProduct,
   listProducts,
   updateProduct,
+  getMerchantProduct,
+  getSingleProductMerchant
 };
