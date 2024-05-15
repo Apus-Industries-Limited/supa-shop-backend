@@ -48,6 +48,7 @@ model Merchant {
   id       String    @id @default(uuid())
   name     String
   email    String    @unique
+  refresh_token      String[]
   products Product[]
 }
 

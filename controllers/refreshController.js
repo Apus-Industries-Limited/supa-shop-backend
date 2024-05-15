@@ -4,6 +4,42 @@ const jwt = require("jsonwebtoken")
 
 const prisma = new PrismaClient();
 
+/**
+ * @swagger
+ * /refresh:
+ *   get:
+ *     summary: Refresh access token
+ *     tags: [Refresh Token]
+ *     responses:
+ *       200:
+ *         description: New access token generated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 accessToken:
+ *                   type: string
+ *                   description: Newly generated access token
+ *                   example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImVtYWlsQGV4YW1wbGUuY29tIiwiaWF0IjoxNjMzMjM5MDAwLCJleHAiOjE2MzMyNDA2MDB9.JkPj1XJ0U1_7x_7uFD3UnnVq-cmSHPpU2rUGkglAnhs
+ *       401:
+ *         description: Unauthorized - Missing or invalid refresh token
+ *       403:
+ *         description: Forbidden - User not found or invalid refresh token
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: internal server error
+ *                 error:
+ *                   type: string
+ *                   example: Error details
+ */
 
 const refresh = async ( req, res ) =>
 {
