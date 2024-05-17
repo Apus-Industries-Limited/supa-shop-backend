@@ -5,8 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon index",
-    "start": "prisma migrate deploy && node index"
+    "dev": "prisma db push && node --watch index",
+    "db-update": "prisma db push",
+    "start": "prisma db push && node index"
   },
   "keywords": [],
   "author": "",
@@ -21,10 +22,11 @@
     "crypto-random-string": "^3.3.1",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
+    "figlet": "^1.7.0",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1",
     "nodemailer": "^6.9.13",
-    "nodemon": "^3.1.0",
     "prisma": "^5.12.1",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.0"

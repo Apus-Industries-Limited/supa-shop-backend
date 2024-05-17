@@ -1,16 +1,146 @@
-const { PrismaClient, Prisma } = require("@prisma/client");
+const { PrismaClient, Prisma } = require( "@prisma/client" );
+const fs = require( 'fs' ).promises;
 
 const prisma = new PrismaClient();
 
+
+
+/**
+ * @swagger
+ * /merchant/product:
+ *   post:
+ *     summary: Create a new product
+ *     tags: [Merchant Products]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         description: Bearer token
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: JWT
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - description
+ *               - price
+ *               - category
+ *               - quantity
+ *               - dp
+ *               - images
+ *             properties:
+ *               name:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               price:
+ *                 type: number
+ *                 format: float
+ *               category:
+ *                 type: string
+ *               quantity:
+ *                 type: integer
+ *               dp:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: binary
+ *               images:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: binary
+ *     responses:
+ *       201:
+ *         description: Product created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 product:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                     name:
+ *                       type: string
+ *                     description:
+ *                       type: string
+ *                     price:
+ *                       type: number
+ *                     category:
+ *                       type: string
+ *                     quantity:
+ *                       type: integer
+ *                     dp:
+ *                       type: string
+ *                     images:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     merchantId:
+ *                       type: integer
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: All field is required
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Merchant not logged in
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Internal server error
+ *                 error:
+ *                   type: string
+ *                   example: Error details
+ */
 const createProduct = async (req, res) => {
-  console.log(req.body);
-  const { name, desc, price } = req.body;
+  const { name, description, price, category, quantity } = req.body;
+  const { dp, images } = req.files;
   try {
-    if (!name || !price || !desc)
-      return res.status(400).json({ message: "All field is required" });
+    if (!name || !price || !description|| !category|| !quantity || !dp)
+      return res.status( 400 ).json( { message: "All field is required" } );
+    if ( images.length < 1 ) return res.status( 400 ).json( { message: "Add a minimum of 1 extra image of the product" } )
+
+    if(res.merchant.id) return res.status(401).json({message:"merchant not logged in"})
+
     const product = await prisma.product.create({
       data: {
-        ...req.body,
+        name,
+        quantity: parseInt( quantity ),
+        description,
+        price: parseFloat(price),
+        dp: dp[0].originalname,
+        images: images.map( image => image.originalname ),
+        category,
         merchantId: res.merchant.id,
       },
     });
@@ -25,10 +155,103 @@ const createProduct = async (req, res) => {
   }
 };
 
+
+
+/**
+ * @swagger
+ * /merchant/product/{id}:
+ *   put:
+ *     summary: Update a product
+ *     tags: [Merchant Products]
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         description: Bearer token
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: JWT
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The product ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: Updated Product Name
+ *               price:
+ *                 type: number
+ *                 example: 19.99
+ *               description:
+ *                 type: string
+ *                 example: Updated Product Description
+ *     security:
+ *      - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: The updated product
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 updatedProduct:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     name:
+ *                       type: string
+ *                     price:
+ *                       type: number
+ *                     description:
+ *                       type: string
+ *       404:
+ *         description: Product not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Product not found
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Merchant not logged in
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Internal server error
+ *                 error:
+ *                   type: string
+ *                   example: Error details
+ */
 const updateProduct = async (req, res) => {
   try {
     const product = req.body;
-    console.log(product, "product");
+    if(res.merchant.id) return res.status(401).json({message:"merchant not logged in"})
 
     const updatedProduct = await prisma.product.update({
       where: {
@@ -52,14 +275,75 @@ const updateProduct = async (req, res) => {
   }
 };
 
+/**
+ * @swagger
+ * /merchant/product/{id}:
+ *   delete:
+ *     summary: Delete a product
+ *     tags: [Merchant Products]
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         description: Bearer token
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: JWT
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The product ID
+ *     security:
+ *      - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Product deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Product deleted successfully
+ *       404:
+ *         description: Product not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Product not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Internal server error
+ *                 error:
+ *                   type: string
+ *                   example: Error details
+ */
+
 const deleteProduct = async (req, res) => {
   try {
-    await prisma.product.delete({
+    const product = await prisma.product.delete({
       where: {
         id: req.params.id,
         merchantId: res.merchant.id,
       },
-    });
+    } );
+    
+    await fs.unlink( `/public/product${ product.dp }` )
+    product.images.forEach(async img=> await fs.unlink( `/public/product${ img }` ))
 
     res.status(200).json({ message: "Product deleted successfully" });
   } catch (e) {
@@ -75,13 +359,601 @@ const deleteProduct = async (req, res) => {
   }
 };
 
+
+/**
+ * @swagger
+ * /merchant/product:
+ *   get:
+ *     summary: Get merchant products
+ *     tags: [Merchant Products]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         description: Bearer token
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: JWT
+ *       - in: query
+ *         name: skip
+ *         schema:
+ *           type: integer
+ *         description: Number of records to skip for pagination
+ *     responses:
+ *       200:
+ *         description: List of products
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 product:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                         example: "123"
+ *                       name:
+ *                         type: string
+ *                         example: "Product Name"
+ *                       price:
+ *                         type: number
+ *                         example: 99.99
+ *                       merchantId:
+ *                         type: string
+ *                         example: "merchant123"
+ *       404:
+ *         description: Product not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Product not found"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "internal server error"
+ *                 error:
+ *                   type: string
+ *                   example: "Error details"
+ */
+
+const getMerchantProduct = async ( req, res ) =>
+{
+  try {
+    const product = await prisma.product.findMany({
+      where: { merchantId: res.merchant.id },
+      skip: +req.query.skip || 0,
+      take: 10,
+    });
+    res.status(200).json({
+      product,
+    });
+
+    
+  } catch (e) {
+    if (e instanceof PrismaInstance.PrismaClientKnownRequestError) {
+      if (e.code === "P2025")
+        return res.status(404).json({ message: "Product not found" });
+    }
+    return res
+      .status(500)
+      .json({ message: "internal server error", error: e.message });
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+/**
+ * @swagger
+ * /merchant/product/{id}:
+ *   get:
+ *     summary: Get a single product for a merchant
+ *     tags: [Merchant Products]
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         description: Bearer token
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: JWT
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The product ID
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Product found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 product:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                       example: "123"
+ *                     name:
+ *                       type: string
+ *                       example: "Product Name"
+ *                     price:
+ *                       type: number
+ *                       example: 99.99
+ *                     description:
+ *                       type: string
+ *                       example: "Product Description"
+ *       404:
+ *         description: Product not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Product not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: internal server error
+ *                 error:
+ *                   type: string
+ *                   example: Error details
+ */
+const getSingleProductMerchant = async ( req, res ) =>
+{
+  try {
+    const { id } = req.params;
+      const product = await prisma.product.findFirstOrThrow( {
+        where: { merchantId:res.merchant.id , id }
+      } );
+      res.status( 200 ).json( {
+        product,
+      } );
+
+  } catch (e) {
+    if (e instanceof PrismaInstance.PrismaClientKnownRequestError) {
+      if (e.code === "P2025")
+        return res.status(404).json({ message: "Product not found" });
+    }
+    return res
+      .status(500)
+      .json({ message: "internal server error", error: e.message });
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+/**
+ * @swagger
+ * /merchant/product/upload/{image}:
+ *   delete:
+ *     summary: Delete a picture from a product
+ *     tags: [Merchant Products]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         description: Bearer token
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: JWT
+ *       - in: path
+ *         name: image
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Name of the image to delete
+ *     responses:
+ *       200:
+ *         description: Image has been deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Image has been deleted
+ *                 product:
+ *                   type: object
+ *                   description: Updated product object
+ *       404:
+ *         description: Images were not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Images were not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Internal server error
+ */
+
+const deletePicture = async ( req, res ) =>
+{
+  try {
+    const { image } = req.params;
+    const product = await prisma.product.findFirstOrThrow( {
+      where: {
+        merchantId:res.merchant.id,
+        images: {
+          has:image
+        }
+      }
+    } )
+    
+    product.images = product.images.filter( img => img !== image )
+    const updatedProduct = await prisma.product.update( {
+      where: {
+        id: product.id,
+        merchantId: res.merchant.id
+      },
+      data: product
+    } )
+    
+    await fs.unlink( `/public/product${ image }` )
+    res.status(200).json({message:"Image has been deleted",product:updatedProduct})
+  } catch (error) {
+    if(error.code === 'ENOENT') return res.status(404).json({message:"Images were not found"})
+    res.status( 500 ).json( { message: "Internal server error" } );
+  }finally {
+    await prisma.$disconnect()
+  }
+}
+
+/**
+ * @swagger
+ * /merchant/product/upload:
+ *   post:
+ *     summary: Upload a picture for a product
+ *     tags: [Merchant Products]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         description: Bearer token
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: JWT
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               id:
+ *                 type: string
+ *                 description: Product ID
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Picture uploaded successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Picture uploaded successfully
+ *       400:
+ *         description: Product ID is required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Product ID is required
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Unauthorized
+ *       404:
+ *         description: Product not found or Merchant ID does not match
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Product not found or Merchant ID does not match
+ *       405:
+ *         description: Maximum images allowed is five
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Maximum images allowed is five
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Internal server error
+ */
+
+const uploadPicture = async ( req, res ) =>
+{
+  try {
+    const { id } = req.body;
+    const { images } = req.file;
+    if(!id) return res.status(400).json({message:"Product Id is required"})
+
+    const product = await prisma.product.findFirstOrThrow( { where: { id,merchantId:res.merchant.id } } )
+    if(product.images.length > 5) return res.status(405).json({message:"Maximun images allowed is five"})
+    
+    product.images= [...product.images, images.originalname]
+
+    await prisma.product.update( { data: product, where: { id } } )
+
+  } catch (error) {
+    res.status( 500 ).json( { message: "Internal server error", error: error.message } );
+  }finally {
+    await prisma.$disconnect()
+  }
+}
+
+/**
+ * @swagger
+ * /merchant/product/{id}:
+ *   post:
+ *     summary: Upload product display picture
+ *     tags: [Merchant Products]
+ *     description: Uploads a display picture for a product.
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         description: Bearer token
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: JWT
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: The ID of the product.
+ *         schema:
+ *           type: string
+ *       - in: formData
+ *         name: dp
+ *         type: file
+ *         description: The product display picture file.
+ *     responses:
+ *       202:
+ *         description: Product display picture updated successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Product dp updated
+ *                 updated:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                       example: 1
+ *                     name:
+ *                       type: string
+ *                       example: Product Name
+ *                     dp:
+ *                       type: string
+ *                       example: dp_filename.jpg
+ *                     merchantId:
+ *                       type: integer
+ *                       example: 123
+ *       400:
+ *         description: Product ID or file is missing.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Product or file is missing
+ *       401:
+ *         description: Unauthorized - Missing bearer token.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Unauthorized - Missing bearer token
+ *       403:
+ *         description: Forbidden - The user does not have permission to update this product.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Forbidden - You don't have permission to update this product
+ *       404:
+ *         description: Product not found or user not authorized.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Product not found or user not authorized
+ *       500:
+ *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Internal server error
+ */
+const uploadDp = async ( req, res ) =>
+{
+  try {
+    const { id } = req.params;
+    const { dp } = req.file;
+    if(!id || !dp) return res.status(400).json({message:"Product or file is missing"})
+
+    const product = await prisma.product.findFirstOrThrow( { where: { id, merchantId: res.merchant.id } } )
+
+    await fs.unlink( `/public/product${ product.dp }` )
+    
+    product.dp= dp.originalname
+
+    const updated = await prisma.product.update( { data: product, where: { id,merchantId:res.merchant.id } } )
+
+
+    return res.status(202).json({message:"product dp updated", updated})
+
+  } catch (error) {
+    console.error( error )
+    res.status( 500 ).json( { message: "Internal server error" } );
+  }finally {
+    await prisma.$disconnect()
+  }
+}
+
+
+
+/**
+ * @dev
+ * The lines below are for users who want to scroll through our product
+ */
+
+
+
+
+/**
+ * @swagger
+ * /product:
+ *   get:
+ *     summary: Get a list of products
+ *     tags: [Product]
+ *     parameters:
+ *       - in: query
+ *         name: skip
+ *         schema:
+ *           type: integer
+ *           format: int64
+ *         description: Number of items to skip
+ *     responses:
+ *       200:
+ *         description: A list of products
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 count:
+ *                   type: integer
+ *                   description: Total number of products
+ *                   example: 10
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                         description: Product ID
+ *                         example: 1
+ *                       name:
+ *                         type: string
+ *                         description: Product name
+ *                         example: Product 1
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: internal server error
+ *                 error:
+ *                   type: string
+ *                   example: Error details
+ */
+
 const listProducts = async (req, res) => {
   try {
     const count = await prisma.product.count();
     const products = await prisma.product.findMany({
       skip: +req.query.skip || 0,
-      take: 5,
-    });
+      take: 10,
+    } );
+  
 
     res.status(200).json({
       count,
@@ -96,11 +968,59 @@ const listProducts = async (req, res) => {
   }
 };
 
+
+/**
+ * @swagger
+ * /product/{id}:
+ *   get:
+ *     summary: Get product by ID
+ *     tags: [Product]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         description: ID of the product to retrieve
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Successful operation
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 product:
+ *                   $ref: '#/components/schemas/Product'
+ *       404:
+ *         description: Product not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Product not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Internal server error
+ */
+
 const getProductById = async (req, res) => {
   try {
+    const {id} = req.params
     const product = await prisma.product.findFirstOrThrow({
-      where: { id: req.params.id },
-    });
+      where: { id },
+    } );
+    
     res.status(200).json({
       product,
     });
@@ -117,10 +1037,111 @@ const getProductById = async (req, res) => {
   }
 };
 
+const listcategory = async ( req, res ) =>
+{
+  try {
+    const category = {
+      FASHION: "fashion",
+      ELECTRONICS: "elecronics",
+      LIFESTYLE: "lifestyle",
+      PHONE: "phone",
+      ACCESSORIES:"accessories",
+      AUTOMOBILE: "automobiles",
+      GROCERRIES:"grocerries",
+    }
+    return res.status(200).json({category})
+  } catch (e) {
+    return res
+      .status(500)
+      .json({ message: "internal server error", error: e.message });
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+const getProducByCategory = async ( req, res ) =>
+{
+  try {
+    const { category, skip } = req.query;
+    const count = await prisma.product.count( {
+      where: {
+      category: category.toUpperCase()
+    }})
+    const products = await prisma.product.findMany( {
+      where: {
+      category: category.toUpperCase()
+      },
+      skip: +skip || 0,
+      take: 10,
+    } )
+
+    return res.status(202).json({products, count})
+  } catch (e) {
+    return res
+      .status(500)
+      .json({ message: "internal server error", error: e.message });
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+const searchFilter = async ( req, res ) =>
+{
+  try {
+    const { search, skip, minPrice, maxPrice } = req.query;
+    let whereClause = {}
+
+    if ( !search ) return res.status( 400 ).json( { message: "enter a search word" } )
+    whereClause.name = {
+      contains: search,
+      mode: "insensitive"
+    }
+
+    if (minPrice && !isNaN(minPrice)) {
+      whereClause.price = {
+        gte: parseFloat(minPrice),
+      };
+    }
+
+    if (maxPrice && !isNaN(maxPrice)) {
+      whereClause.price = {
+        ...whereClause.price,
+        lte: parseFloat(maxPrice),
+      };
+    }
+
+    const count = await prisma.product.count( {
+      where: whereClause
+    } )
+    const products = await prisma.product.findMany( {
+      where: whereClause,
+      skip: +skip || 0,
+      take: 10,
+    } )
+    return res.status(202).json({products,count})
+  } catch (e) {
+    console.error(e.message)
+    return res
+      .status(500)
+      .json( { message: "internal server error", error: e.message } );
+    
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
 module.exports = {
   createProduct,
   getProductById,
   deleteProduct,
   listProducts,
   updateProduct,
+  getMerchantProduct,
+  getSingleProductMerchant,
+  deletePicture,
+  uploadDp,
+  uploadPicture,
+  listcategory,
+  getProducByCategory,
+  searchFilter
 };
