@@ -14,11 +14,11 @@ const swaggerDefinition = {
     {
       url: 'http://localhost:3500',
       description: 'Development server',
-        },
-        {
-              url: "https://supa-shop-backend.onrender.com",
-              description:"Production server"
-        }
+    },
+    {
+      url: "https://supa-shop-backend.onrender.com",
+      description:"Production server"
+    }
   ],
 };
 

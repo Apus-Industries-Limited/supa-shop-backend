@@ -1,23 +1,18 @@
 const { Router } = require("express");
 const {
-  createProduct,
-  deleteProduct,
   getProductById,
   listProducts,
-  updateProduct,
+  listcategory,
+  getProducByCategory,
+  searchFilter,
 } = require("../controllers/productController.js");
-const { verifyMerchant, verifyJwt } = require("../middleware/auth.js");
 
 const router = Router();
 
-router.post("/create", [verifyJwt, verifyMerchant], createProduct);
-
-router.put("/update/:id", [verifyJwt, verifyMerchant], updateProduct);
-
-router.delete("/delete/:id", [verifyJwt, verifyMerchant], deleteProduct);
-
-router.get("/", [verifyJwt], listProducts);
-
-router.get("/:id", [verifyJwt], getProductById);
+router.get( "/", listProducts );
+router.get( "/categories", listcategory )
+router.get( '/category', getProducByCategory )
+router.get('/search',searchFilter)
+router.get("/:id", getProductById);
 
 module.exports = router;
