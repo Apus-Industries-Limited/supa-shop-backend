@@ -342,8 +342,8 @@ const deleteProduct = async (req, res) => {
       },
     } );
     
-    await fs.unlink( `public/images/${ product.dp }` )
-    product.images.forEach(async img=> await fs.unlink( `public/images/${ img }` ))
+    await fs.unlink( `/public/product${ product.dp }` )
+    product.images.forEach(async img=> await fs.unlink( `/public/product${ img }` ))
 
     res.status(200).json({ message: "Product deleted successfully" });
   } catch (e) {
@@ -630,7 +630,7 @@ const deletePicture = async ( req, res ) =>
       data: product
     } )
     
-    await fs.unlink( `public/images/${ image }` )
+    await fs.unlink( `/public/product${ image }` )
     res.status(200).json({message:"Image has been deleted",product:updatedProduct})
   } catch (error) {
     if(error.code === 'ENOENT') return res.status(404).json({message:"Images were not found"})
@@ -866,7 +866,7 @@ const uploadDp = async ( req, res ) =>
 
     const product = await prisma.product.findFirstOrThrow( { where: { id, merchantId: res.merchant.id } } )
 
-    await fs.unlink( `public/images/${ product.dp }` )
+    await fs.unlink( `/public/product${ product.dp }` )
     
     product.dp= dp.originalname
 

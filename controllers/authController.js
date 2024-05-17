@@ -1,6 +1,5 @@
 const { PrismaClient, Prisma } = require("@prisma/client");
 const argon = require("argon2");
-const crypto = require("crypto");
 const randomString = require("crypto-random-string");
 const jwt = require("jsonwebtoken");
 const { sendMail } = require("../utils/mail");
@@ -170,6 +169,7 @@ const createUser = async (req, res) => {
     });
     delete user.password;
     delete user.verification_code;
+    delete user.refresh_token
     await sendMail(from, email, subject, html);
     res.status(201).json({ message: "Account created", user });
   } catch (e) {

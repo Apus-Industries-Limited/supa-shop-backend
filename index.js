@@ -18,11 +18,23 @@ app.use(compression());
 app.use(credentials);
 app.use( cors() );
 const storage = multer.diskStorage( {
-      destination: './public/images',
-      filename: ( req,file, cb )=>{
-            cb( null, file.originalname );
-      }
+    destination: './public/product',
+    filename: ( req,file, cb )=>{
+      cb( null, file.originalname );
+    }
 } )
+
+const storeStorage = multer.diskStorage( {
+  destination: './public/store',
+  filename: ( req, file, cb ) =>
+  {
+    cb(null, file.originalname)
+  }
+} )
+
+const storeUpload = multer( { storeStorage } )
+const storecp = storeUpload.fields( [ { name: "dp", maxCount: 1 } ] )
+
 const upload = multer({storage})
 const cp = upload.fields([{name:'dp',maxCount:1}, {name:'images',maxCount:3}])
 app.use(express.json());
@@ -37,7 +49,8 @@ app.use("/refresh", require("./routes/refresh"));
 app.use("/auth", require("./routes/auth"));
 app.use( "/logout", require( "./routes/logout" ) );
 app.use("/verify-mail", require("./routes/verify"));
-app.use("/product", require("./routes/product"));
+app.use( "/product", require( "./routes/product" ) );
+app.use("/merchant/auth",storecp,require("./routes/merchantAuth"));
 
 
 // Routes which requires authorization
@@ -51,12 +64,12 @@ app.use('/merchant/product',cp, require("./routes/merchant"))
 
 app.listen( PORT, () =>
 {
-  figlet.text('SupaShop API 1.0', {
+  figlet.text( 'SupaShop API 1.0', {
     font: 'Doom',
     horizontalLayout: 'default',
     verticalLayout: 'default',
-    width: 80,
-    whitespaceBreak: true
+    width: 100,
+    whitespaceBreak: true,
   }, (err, asciiArt) => {
     if (err) {
       console.error(err);
