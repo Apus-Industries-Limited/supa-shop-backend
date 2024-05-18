@@ -1,6 +1,5 @@
 const { PrismaClient, Prisma } = require("@prisma/client");
 const argon = require("argon2");
-const crypto = require("crypto");
 const randomString = require("crypto-random-string");
 const jwt = require("jsonwebtoken");
 const { sendMail } = require("../utils/mail");
@@ -92,7 +91,8 @@ const createUser = async (req, res) => {
   const { name, email, phone_number, username, password } = req.body;
   try {
     if (!name || !email || !phone_number || !username || !password)
-      return res.status(400).json({ message: "All field is required" });
+      return res.status( 400 ).json( { message: "All field is required" } );
+    console.log(res.username)
 
     const hashedPassword = await argon.hash(password);
     const code = randomString({ length: 6, type: "numeric" });
@@ -115,6 +115,7 @@ const createUser = async (req, res) => {
       margin: 0 auto;
       border-radius: 5px;
       background-color: #ff7900;
+      height: 100dvh;
     }
     .header {
       text-align: center;
@@ -168,8 +169,7 @@ const createUser = async (req, res) => {
     });
     delete user.password;
     delete user.verification_code;
-
-    console.log(user);
+    delete user.refresh_token
     await sendMail(from, email, subject, html);
     res.status(201).json({ message: "Account created", user });
   } catch (e) {
@@ -290,6 +290,8 @@ const loginUser = async (req, res) => {
     const accessToken = jwt.sign(
       {
         email: foundUser.email,
+        id: foundUser.id,
+        name: foundUser.name
       },
       process.env.ACCESS_TOKEN_SECRET,
       {
@@ -300,6 +302,8 @@ const loginUser = async (req, res) => {
     const refreshToken = jwt.sign(
       {
         email: foundUser.email,
+        id: foundUser.id,
+        name: foundUser.name
       },
       process.env.REFRESH_TOKEN_SECRET,
       {
