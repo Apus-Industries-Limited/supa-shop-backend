@@ -316,6 +316,64 @@ const verifyCode = async (req, res) => {
   }
 };
 
+
+/**
+ * @swagger
+ * /merchant/auth/verify-mail/{email}:
+ *   get:
+ *     summary: Send a verification email
+ *     tags: [Merchant Auth]
+ *     parameters:
+ *       - in: path
+ *         name: email
+ *         schema:
+ *           type: string
+ *           format: email
+ *         required: true
+ *         description: Merchant's email address to send the verification code
+ *     responses:
+ *       200:
+ *         description: Verification mail has been sent
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Verification mail has been sent
+ *       400:
+ *         description: Email is required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Email is required
+ *       404:
+ *         description: Merchant not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: User not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Error details
+ */
+
 const verificationMerchantMail = async (req, res) => {
   try {
     const { email } = req.params;
@@ -416,6 +474,73 @@ const verificationMerchantMail = async (req, res) => {
   await prisma.$disconnect();
   }
 };
+
+
+/**
+ * @swagger
+ * /merchant/auth/verify-mail:
+ *   post:
+ *     summary: Verify merchant's email with a verification code
+ *     tags: [Merchant Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - code
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: user@example.com
+ *               code:
+ *                 type: string
+ *                 example: 123456
+ *     responses:
+ *       202:
+ *         description: merchant has been verified successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: merchant has been verified successfully
+ *       400:
+ *         description: Bad request - Missing email or code, or invalid verification code
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: All field is required or Invalid Verification code
+ *       404:
+ *         description: merchant not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: merchant not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Internal server error
+ */
 
 const verifyMerchantCode = async (req, res) => {
   try {

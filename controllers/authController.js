@@ -284,7 +284,7 @@ const loginUser = async (req, res) => {
 
     const validatePassword = await argon.verify(foundUser.password, password);
     if (!validatePassword)
-      return res.status(401).json({ message: "Invalid credentials" });
+      return res.status(403).json({ message: "Invalid credentials" });
 
     // create jwt token
     const accessToken = jwt.sign(
