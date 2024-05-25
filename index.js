@@ -14,8 +14,11 @@ const morgan = require("morgan");
 const PORT = process.env.PORT || 3500;
 const app = express();
 
-app.use(compression());
-app.use(morgan("dev"));
+app.use(compression({
+  level: 8,
+  threshold: 1024,
+} ) );
+
 // Middlewares
 app.use(credentials);
 app.use(cors());
