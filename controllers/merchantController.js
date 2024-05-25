@@ -6,12 +6,13 @@ const { sendMail } = require("../utils/mail");
 
 const prisma = new PrismaClient();
 
+
 /**
  * @swagger
- * /auth/register:
+ * /merchant/auth/register:
  *   post:
- *     summary: Register a new user
- *     tags: [Auth]
+ *     summary: Register a new merchant
+ *     tags: [Merchant Auth]
  *     requestBody:
  *       required: true
  *       content:
@@ -24,6 +25,10 @@ const prisma = new PrismaClient();
  *               - phone_number
  *               - username
  *               - password
+ *               - address
+ *               - city
+ *               - country
+ *               - dp  
  *             properties:
  *               name:
  *                 type: string
@@ -35,6 +40,17 @@ const prisma = new PrismaClient();
  *                 type: string
  *               password:
  *                 type: string
+ *               address:
+ *                 type: string
+ *               city:
+ *                 type: string
+ *               country:
+ *                 type: string  
+ *               dp:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: binary
  *     responses:
  *       201:
  *         description: Account created
@@ -87,17 +103,18 @@ const prisma = new PrismaClient();
  *                   type: object
  */
 
-const createUser = async (req, res) => {
-  const { name, email, phone_number, username, password } = req.body;
+const createMerchant = async ( req, res ) =>
+{
+      const { name, email, phone_number, username, password, address, city, country } = req.body;
+      const { dp } = req.file;
   try {
-    if (!name || !email || !phone_number || !username || !password)
+    if (!name || !email || !phone_number || !username || !password || !address || !city || !country || !dp )
       return res.status( 400 ).json( { message: "All field is required" } );
-    console.log(res.username)
 
     const hashedPassword = await argon.hash(password);
     const code = randomString({ length: 6, type: "numeric" });
     const html = `
-                  <!DOCTYPE html>
+      <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -115,7 +132,7 @@ const createUser = async (req, res) => {
       margin: 0 auto;
       border-radius: 5px;
       background-color: #ff7900;
-      height: 100dvh;
+      color: #fefefe
     }
     .header {
       text-align: center;
@@ -130,6 +147,8 @@ const createUser = async (req, res) => {
     a {
       color: #fff2eb;
       text-decoration: none;
+      border: none;
+      box-shadow: 2px, 2px, 5px, #ff7500
     }
   </style>
 </head>
@@ -139,7 +158,7 @@ const createUser = async (req, res) => {
       <h1>Welcome to SupaShop!</h1>
     </div>
     <div class="content">
-      <p>Thank you for signing up for an account on SupaShop. To verify your email address and unlock full access to our features, please enter the verification code below.</p>
+      <p>Thank you for signing up for a merchant account on SupaShop. To verify your email address and unlock full access to our features, please enter the verification code below.</p>
     </div>
     <div class="cta">
       <h1>${code}</h1>
@@ -157,7 +176,7 @@ const createUser = async (req, res) => {
     const subject = "Verify your account SupaShop!";
     const from = `Supashop Support<${process.env.EMAIL}>`;
 
-    const user = await prisma.user.create({
+    const user = await prisma.merchant.create({
       data: {
         name,
         email,
@@ -165,6 +184,10 @@ const createUser = async (req, res) => {
         username,
         password: hashedPassword,
         verification_code: code,
+        address, 
+        city, 
+        country,
+        dp: dp[0].originalname
       },
     });
     delete user.password;
@@ -191,12 +214,13 @@ const createUser = async (req, res) => {
   }
 };
 
+
 /**
  * @swagger
- * /auth/login:
+ * /merchant/auth/login:
  *   post:
- *     summary: Logs in a user
- *     tags: [Auth]
+ *     summary: Logs in a merchant
+ *     tags: [Merchant Auth]
  *     requestBody:
  *       required: true
  *       content:
@@ -254,7 +278,7 @@ const createUser = async (req, res) => {
  *                   type: string
  *                   example: Invalid credentials
  *       404:
- *         description: User not found
+ *         description: Merchant not found
  *         content:
  *           application/json:
  *             schema:
@@ -275,16 +299,16 @@ const createUser = async (req, res) => {
  *                   example: internal server error
  */
 
-const loginUser = async (req, res) => {
+const loginMerchant = async (req, res) => {
   const { email, password } = req.body;
   try {
     if (!email || !password)
       return res.status(400).json({ message: "All field is required" });
-    const foundUser = await prisma.user.findUniqueOrThrow({ where: { email } });
+    const foundUser = await prisma.merchant.findUniqueOrThrow({ where: { email } });
 
     const validatePassword = await argon.verify(foundUser.password, password);
     if (!validatePassword)
-      return res.status(403).json({ message: "Invalid credentials" });
+      return res.status(401).json({ message: "Invalid credentials" });
 
     // create jwt token
     const accessToken = jwt.sign(
@@ -311,7 +335,7 @@ const loginUser = async (req, res) => {
       }
     );
 
-    await prisma.user.update({
+    await prisma.merchant.update({
       where: { email },
       data: {
         refresh_token: [...foundUser.refresh_token, refreshToken],
@@ -345,10 +369,10 @@ const loginUser = async (req, res) => {
 
 /**
  * @swagger
- * /auth/forgot-password:
+ * /merchant/auth/forgot-password:
  *   post:
  *     summary: Request a password reset
- *     tags: [Auth]
+ *     tags: [Merchant Auth]
  *     requestBody:
  *       required: true
  *       content:
@@ -384,7 +408,7 @@ const loginUser = async (req, res) => {
  *                   type: string
  *                   example: Email is required
  *       404:
- *         description: User not found
+ *         description: Merchant not found
  *         content:
  *           application/json:
  *             schema:
@@ -407,13 +431,14 @@ const loginUser = async (req, res) => {
  *                   type: string
  *                   example: Error details
  */
-const forgotPassword = async (req, res) => {
+
+const forgotMerchantPassword = async (req, res) => {
   const { email } = req.body;
   try {
     if (!email) return res.status(400).json({ message: "Email is required" });
 
     // Checking if the user exists
-    const user = await prisma.user.findUnique({
+    const user = await prisma.merchant.findUnique({
       where: {
         email,
       },
@@ -429,7 +454,7 @@ const forgotPassword = async (req, res) => {
       }
     );
 
-    await prisma.user.update({
+    await prisma.merchant.update({
       where: { email },
       data: {
         resetPasswordToken: resetToken,
@@ -509,10 +534,10 @@ const forgotPassword = async (req, res) => {
 
 /**
  * @swagger
- * /auth/reset-password:
+ * /merchant/auth/reset-password:
  *   post:
- *     summary: Reset user password
- *     tags: [Auth]
+ *     summary: Reset Merchant password
+ *     tags: [Merchant Auth]
  *     parameters:
  *       - in: query
  *         name: token
@@ -569,7 +594,7 @@ const forgotPassword = async (req, res) => {
  *                   example: Error details
  */
 
-const resetPassword = async (req, res) => {
+const resetMerchantPassword = async (req, res) => {
   const { token } = req.query;
   const { password } = req.body;
 
@@ -583,19 +608,21 @@ const resetPassword = async (req, res) => {
       });
     }
 
-    const user = await prisma.user.findUnique({
+    const user = await prisma.merchant.findUnique({
       where: {
         email,
         resetPasswordToken: token,
       },
     });
     // console.log(user, "user");
-    if (!user) return res.status(400).json({ message: "Invalid or expired reset token" });
-
+        if ( !user ) return res.status( 400 ).json( { message: "Invalid or expired reset token" } );
+        
+        const validate = await argon.verify(user.password,password)
+        if (validate) return res.status(400).json({message:"New password must be differnt from old password"})
     const hashedPassword = await argon.hash(password);
 
     // Update user with the new password and remove reset token
-    await prisma.user.update({
+    await prisma.merchant.update({
       where: { email: user.email },
       data: {
         password: hashedPassword,
@@ -616,4 +643,5 @@ const resetPassword = async (req, res) => {
     await prisma.$disconnect();
   }
 };
-module.exports = { createUser, loginUser, forgotPassword, resetPassword };
+
+module.exports = {createMerchant, loginMerchant,forgotMerchantPassword,resetMerchantPassword}

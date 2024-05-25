@@ -7,11 +7,10 @@ const prisma = new PrismaClient();
 const verifyJwt = (req, res, next) => {
   const authHeader = req.headers.authorization || req.headers.Authorization;
   if (!authHeader) return res.sendStatus(401);
-  console.log(authHeader);
   const token = authHeader.split(" ")[1];
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
     if (err) return res.sendStatus(403); // invalid token
-    res.user = decoded.email;
+    res.user = {email:decoded.email,id:decoded.id, name:decoded.name};
     next();
   });
 };
@@ -20,7 +19,8 @@ const verifyMerchant = async (req, res, next) => {
   try {
     const merchant = await prisma.merchant.findUniqueOrThrow({
       where: {
-        email: res.user,
+        email: res.user.email,
+        id:res.user.id
       },
     });
     res.merchant = merchant;
