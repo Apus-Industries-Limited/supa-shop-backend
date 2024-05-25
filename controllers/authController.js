@@ -89,15 +89,15 @@ const prisma = new PrismaClient();
 
 const createUser = async (req, res) => {
   const { name, email, phone_number, username, password } = req.body;
+  console.time("cluster")
   try {
     if (!name || !email || !phone_number || !username || !password)
       return res.status( 400 ).json( { message: "All field is required" } );
-    console.log(res.username)
 
     const hashedPassword = await argon.hash(password);
     const code = randomString({ length: 6, type: "numeric" });
     const html = `
-                  <!DOCTYPE html>
+    <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -179,6 +179,7 @@ const createUser = async (req, res) => {
     }
     return res.status(500).json({ message: "internal server error", error: e });
   } finally {
+    console.timeEnd("cluster")
     setTimeout(async () => {
       await prisma.user.update({
         where: { email },
@@ -277,6 +278,7 @@ const createUser = async (req, res) => {
 
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
+    console.time("cluster")
   try {
     if (!email || !password)
       return res.status(400).json({ message: "All field is required" });
@@ -331,6 +333,7 @@ const loginUser = async (req, res) => {
       secure: true,
     });
 
+    console.log( user )
     res.status(200).json({ message: "Login was successful", user });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
@@ -340,6 +343,8 @@ const loginUser = async (req, res) => {
     return res.status(500).json({ message: "internal server error", error: e });
   } finally {
     await prisma.$disconnect();
+    console.log( "disconnected from db" )
+    
   }
 };
 
