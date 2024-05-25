@@ -6,13 +6,31 @@ const { sendMail } = require("../utils/mail");
 
 const prisma = new PrismaClient();
 
-const createMerchant = async ( req, res ) =>
-{
-      const { name, email, phone_number, username, password, address, city, country } = req.body;
-      const { dp } = req.file;
+const createMerchant = async (req, res) => {
+  const {
+    name,
+    email,
+    phone_number,
+    username,
+    password,
+    address,
+    city,
+    country,
+  } = req.body;
+  const { dp } = req.files;
   try {
-    if (!name || !email || !phone_number || !username || !password || !address || !city || !country || !dp )
-      return res.status( 400 ).json( { message: "All field is required" } );
+    if (
+      !name ||
+      !email ||
+      !phone_number ||
+      !username ||
+      !password ||
+      !address ||
+      !city ||
+      !country ||
+      !dp
+    )
+      return res.status(400).json({ message: "All field is required" });
 
     const hashedPassword = await argon.hash(password);
     const code = randomString({ length: 6, type: "numeric" });
@@ -87,15 +105,15 @@ const createMerchant = async ( req, res ) =>
         username,
         password: hashedPassword,
         verification_code: code,
-        address, 
-        city, 
+        address,
+        city,
         country,
-        dp: dp[0].originalname
+        dp: dp[0].originalname,
       },
     });
     delete user.password;
     delete user.verification_code;
-    delete user.refresh_token
+    delete user.refresh_token;
     await sendMail(from, email, subject, html);
     res.status(201).json({ message: "Account created", user });
   } catch (e) {
@@ -122,7 +140,9 @@ const loginMerchant = async (req, res) => {
   try {
     if (!email || !password)
       return res.status(400).json({ message: "All field is required" });
-    const foundUser = await prisma.merchant.findUniqueOrThrow({ where: { email } });
+    const foundUser = await prisma.merchant.findUniqueOrThrow({
+      where: { email },
+    });
 
     const validatePassword = await argon.verify(foundUser.password, password);
     if (!validatePassword)
@@ -133,7 +153,7 @@ const loginMerchant = async (req, res) => {
       {
         email: foundUser.email,
         id: foundUser.id,
-        name: foundUser.name
+        name: foundUser.name,
       },
       process.env.ACCESS_TOKEN_SECRET,
       {
@@ -145,7 +165,7 @@ const loginMerchant = async (req, res) => {
       {
         email: foundUser.email,
         id: foundUser.id,
-        name: foundUser.name
+        name: foundUser.name,
       },
       process.env.REFRESH_TOKEN_SECRET,
       {
@@ -306,10 +326,16 @@ const resetMerchantPassword = async (req, res) => {
       },
     });
     // console.log(user, "user");
-        if ( !user ) return res.status( 400 ).json( { message: "Invalid or expired reset token" } );
-        
-        const validate = await argon.verify(user.password,password)
-        if (validate) return res.status(400).json({message:"New password must be differnt from old password"})
+    if (!user)
+      return res
+        .status(400)
+        .json({ message: "Invalid or expired reset token" });
+
+    const validate = await argon.verify(user.password, password);
+    if (validate)
+      return res
+        .status(400)
+        .json({ message: "New password must be differnt from old password" });
     const hashedPassword = await argon.hash(password);
 
     // Update user with the new password and remove reset token
@@ -335,4 +361,9 @@ const resetMerchantPassword = async (req, res) => {
   }
 };
 
-module.exports = {createMerchant, loginMerchant,forgotMerchantPassword,resetMerchantPassword}
+module.exports = {
+  createMerchant,
+  loginMerchant,
+  forgotMerchantPassword,
+  resetMerchantPassword,
+};
