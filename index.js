@@ -62,6 +62,10 @@ if (cluster.isMaster) {
 
   app.use(express.static("public"))
 
+  app.get( "/", ( req, res ) =>
+  {
+    return res.status(301).redirect('/docs')
+  })
   app.use("/docs", swaggerUi.serve,swaggerUi.setup(swaggerSpec));
   app.use("/waitlist", require("./routes/waitlist"));
   app.use("/refresh", require("./routes/refresh"));

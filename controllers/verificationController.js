@@ -288,11 +288,11 @@ const verifyCode = async (req, res) => {
       <h1>Welcome to SupaShop!</h1>
     </div>
     <div class="content">
-      <p>Hi ${user.name},</p>
+      <p>Hi ${ user.name },</p>
       <p>Your email address has been successfully verified. You're now ready to explore all the great things SupaShop has to offer.</p>
     </div>
     <div class="cta">
-      <a href="https://supashop.co/213edaq3ew2">Start Exploring Now!</a>
+      <a href="${process.env.FRONTEND_URL}">Start Exploring Now!</a>
     </div>
   </div>
 </body>
@@ -607,7 +607,7 @@ const verifyMerchantCode = async (req, res) => {
       <p>Your email address has been successfully verified. You're now ready to explore all the great things SupaShop has to offer.</p>
     </div>
     <div class="cta">
-      <a href="https://supashop.co/213edaq3ew2">Start Exploring Now!</a>
+      <a href="${process.env.FRONTEND_URL}/merchnt">Start Exploring Now!</a>
     </div>
   </div>
 </body>
