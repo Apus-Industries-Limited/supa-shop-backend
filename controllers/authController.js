@@ -418,13 +418,11 @@ const forgotPassword = async (req, res) => {
     if (!email) return res.status(400).json({ message: "Email is required" });
 
     // Checking if the user exists
-    const user = await prisma.user.findUnique({
+    const user = await prisma.user.findUniqueOrThrow({
       where: {
         email,
       },
     });
-
-    if (!user) return res.status(404).json({ message: "User not found" });
 
     const resetToken = jwt.sign(
       { user: user.email },
@@ -503,7 +501,11 @@ const forgotPassword = async (req, res) => {
     await sendMail(from, email, subject, html);
 
     res.status(200).json({ message: "Password reset link sent to your email" });
-  } catch (e) {
+  } catch ( e ) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError) {
+      if (e.code === "P2025")
+        return res.status(404).json({ message: "User not found" });
+    }
     return res
       .status(500)
       .json({ message: "internal server error", error: e.message });
@@ -588,14 +590,13 @@ const resetPassword = async (req, res) => {
       });
     }
 
-    const user = await prisma.user.findUnique({
+    const user = await prisma.user.findUniqueOrThrow({
       where: {
         email,
         resetPasswordToken: token,
       },
     });
     // console.log(user, "user");
-    if (!user) return res.status(400).json({ message: "Invalid or expired reset token" });
 
     const hashedPassword = await argon.hash(password);
 
@@ -608,7 +609,11 @@ const resetPassword = async (req, res) => {
       },
     });
     res.status(200).json({ message: "Password reset successful" });
-  } catch (e) {
+  } catch ( e ) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError) {
+      if (e.code === "P2025")
+        return res.status(404).json({ message: "User not found" });
+    }
     if (e.message === "Invalid or expired reset token") {
       return res
         .status(400)
