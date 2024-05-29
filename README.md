@@ -1,4 +1,4 @@
-# Product Search API
+# SupaShop API
 
 ## Overview
 This is an Express application that provides an API for **SupaShop**. It includes Swagger documentation for easy exploration and testing of the API endpoints.
