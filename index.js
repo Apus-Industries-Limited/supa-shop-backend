@@ -78,7 +78,7 @@ if (cluster.isMaster) {
 
   // Routes which requires authorization
   app.use( verifyJwt );
-
+  app.use("/cart", require("./routes/cart"));
 
   app.use(verifyMerchant)
   app.use('/merchant/product',cp, require("./routes/merchant"))

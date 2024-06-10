@@ -3,16 +3,16 @@ const {
   getProductById,
   listProducts,
   listcategory,
-  getProducByCategory,
+  getProductByCategory,
   searchFilter,
 } = require("../controllers/productController.js");
 
 const router = Router();
 
-router.get( "/", listProducts );
-router.get( "/categories", listcategory )
-router.get( '/category', getProducByCategory )
-router.get('/search',searchFilter)
+router.get("/", listProducts);
+router.get("/categories", listcategory);
+router.get("/category", getProductByCategory);
+router.get("/search", searchFilter);
 router.get("/:id", getProductById);
 
 module.exports = router;

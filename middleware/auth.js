@@ -10,7 +10,7 @@ const verifyJwt = (req, res, next) => {
   const token = authHeader.split(" ")[1];
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
     if (err) return res.sendStatus(403); // invalid token
-    res.user = {email:decoded.email,id:decoded.id, name:decoded.name};
+    res.user = { email: decoded.email, id: decoded.id, name: decoded.name };
     next();
   });
 };
@@ -20,7 +20,7 @@ const verifyMerchant = async (req, res, next) => {
     const merchant = await prisma.merchant.findUniqueOrThrow({
       where: {
         email: res.user.email,
-        id:res.user.id
+        id: res.user.id,
       },
     });
     res.merchant = merchant;

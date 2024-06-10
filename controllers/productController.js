@@ -1,9 +1,8 @@
-const { PrismaClient, Prisma } = require( "@prisma/client" );
-const fs = require( 'fs' ).promises;
+const { PrismaClient, Prisma } = require("@prisma/client");
+const { json } = require("../utils/bigint-serializer");
+const fs = require("fs").promises;
 
 const prisma = new PrismaClient();
-
-
 
 /**
  * @swagger
@@ -126,26 +125,27 @@ const createProduct = async (req, res) => {
   const { name, description, price, category, quantity } = req.body;
   const { dp, images } = req.files;
   try {
-    if (!name || !price || !description|| !category|| !quantity || !dp)
-      return res.status( 400 ).json( { message: "All field is required" } );
-    if ( images.length < 1 ) return res.status( 400 ).json( { message: "Add a minimum of 1 extra image of the product" } )
-
-    if(res.merchant.id) return res.status(401).json({message:"merchant not logged in"})
+    if (!name || !price || !description || !category || !quantity || !dp)
+      return res.status(400).json({ message: "All field is required" });
+    if (!images)
+      return res
+        .status(400)
+        .json({ message: "Add a minimum of 1 extra image of the product" });
 
     const product = await prisma.product.create({
       data: {
         name,
-        quantity: parseInt( quantity ),
+        quantity: parseInt(quantity),
         description,
         price: parseFloat(price),
         dp: dp[0].originalname,
-        images: images.map( image => image.originalname ),
+        images: images.map((image) => image.originalname),
         category,
         merchantId: res.merchant.id,
       },
     });
 
-    res.status(201).json({ product });
+    res.status(201).send(json(product));
   } catch (e) {
     return res
       .status(500)
@@ -154,8 +154,6 @@ const createProduct = async (req, res) => {
     await prisma.$disconnect();
   }
 };
-
-
 
 /**
  * @swagger
@@ -251,7 +249,8 @@ const createProduct = async (req, res) => {
 const updateProduct = async (req, res) => {
   try {
     const product = req.body;
-    if(res.merchant.id) return res.status(401).json({message:"merchant not logged in"})
+    if (res.merchant.id)
+      return res.status(401).json({ message: "merchant not logged in" });
 
     const updatedProduct = await prisma.product.update({
       where: {
@@ -261,7 +260,7 @@ const updateProduct = async (req, res) => {
       data: product,
     });
 
-    res.status(200).json({ updatedProduct });
+    res.status(200).send(json(updatedProduct));
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
       if (e.code === "P2025")
@@ -340,10 +339,12 @@ const deleteProduct = async (req, res) => {
         id: req.params.id,
         merchantId: res.merchant.id,
       },
-    } );
-    
-    await fs.unlink( `/public/product${ product.dp }` )
-    product.images.forEach(async img=> await fs.unlink( `/public/product${ img }` ))
+    });
+
+    await fs.unlink(`/public/product${product.dp}`);
+    product.images.forEach(
+      async (img) => await fs.unlink(`/public/product${img}`)
+    );
 
     res.status(200).json({ message: "Product deleted successfully" });
   } catch (e) {
@@ -358,7 +359,6 @@ const deleteProduct = async (req, res) => {
     await prisma.$disconnect();
   }
 };
-
 
 /**
  * @swagger
@@ -431,19 +431,14 @@ const deleteProduct = async (req, res) => {
  *                   example: "Error details"
  */
 
-const getMerchantProduct = async ( req, res ) =>
-{
+const getMerchantProduct = async (req, res) => {
   try {
     const product = await prisma.product.findMany({
       where: { merchantId: res.merchant.id },
       skip: +req.query.skip || 0,
       take: 10,
     });
-    res.status(200).json({
-      product,
-    });
-
-    
+    res.status(200).send(json(product));
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
       if (e.code === "P2025")
@@ -455,7 +450,7 @@ const getMerchantProduct = async ( req, res ) =>
   } finally {
     await prisma.$disconnect();
   }
-}
+};
 
 /**
  * @swagger
@@ -526,17 +521,13 @@ const getMerchantProduct = async ( req, res ) =>
  *                   type: string
  *                   example: Error details
  */
-const getSingleProductMerchant = async ( req, res ) =>
-{
+const getSingleProductMerchant = async (req, res) => {
   try {
     const { id } = req.params;
-      const product = await prisma.product.findFirstOrThrow( {
-        where: { merchantId:res.merchant.id , id }
-      } );
-      res.status( 200 ).json( {
-        product,
-      } );
-
+    const product = await prisma.product.findFirstOrThrow({
+      where: { merchantId: res.merchant.id, id },
+    });
+    res.status(200).send(json(product));
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
       if (e.code === "P2025")
@@ -548,7 +539,7 @@ const getSingleProductMerchant = async ( req, res ) =>
   } finally {
     await prisma.$disconnect();
   }
-}
+};
 
 /**
  * @swagger
@@ -608,25 +599,41 @@ const getSingleProductMerchant = async ( req, res ) =>
  *                   example: Internal server error
  */
 
-const deletePicture = async ( req, res ) =>
-{
+const deletePicture = async (req, res) => {
   try {
     const { image } = req.params;
-    const product = await prisma.product.findFirstOrThrow( {
+    const product = await prisma.product.findFirstOrThrow({
       where: {
-        merchantId:res.merchant.id,
+        merchantId: res.merchant.id,
         images: {
-          has:image
-        }
-      }
-    } )
-    
-    product.images = product.images.filter( img => img !== image )
-    const updatedProduct = await prisma.product.update( {
+          has: image,
+        },
+      },
+    });
+
+    product.images = product.images.filter((img) => img !== image);
+    const updatedProduct = await prisma.product.update({
       where: {
         id: product.id,
-        merchantId: res.merchant.id
+        merchantId: res.merchant.id,
       },
+<<<<<<< starter
+      data: product,
+    });
+
+    await fs.unlink(`/public/product${image}`);
+    res
+      .status(200)
+      .send(
+        json({ message: "Image has been deleted", product: updatedProduct })
+      );
+  } catch (error) {
+    if (error.code === "ENOENT")
+      return res.status(404).json({ message: "Images were not found" });
+    res.status(500).json({ message: "Internal server error" });
+  } finally {
+    await prisma.$disconnect();
+=======
       data: product
     } )
     
@@ -641,8 +648,9 @@ const deletePicture = async ( req, res ) =>
     res.status( 500 ).json( { message: "Internal server error" } );
   }finally {
     await prisma.$disconnect()
+>>>>>>> master
   }
-}
+};
 
 /**
  * @swagger
@@ -736,26 +744,31 @@ const deletePicture = async ( req, res ) =>
  *                   example: Internal server error
  */
 
-const uploadPicture = async ( req, res ) =>
-{
+const uploadPicture = async (req, res) => {
   try {
     const { id } = req.body;
     const { images } = req.file;
-    if(!id) return res.status(400).json({message:"Product Id is required"})
+    if (!id) return res.status(400).json({ message: "Product Id is required" });
 
-    const product = await prisma.product.findFirstOrThrow( { where: { id,merchantId:res.merchant.id } } )
-    if(product.images.length > 5) return res.status(405).json({message:"Maximun images allowed is five"})
-    
-    product.images= [...product.images, images.originalname]
+    const product = await prisma.product.findFirstOrThrow({
+      where: { id, merchantId: res.merchant.id },
+    });
+    if (product.images.length > 5)
+      return res
+        .status(405)
+        .json({ message: "Maximun images allowed is five" });
 
-    await prisma.product.update( { data: product, where: { id } } )
+    product.images = [...product.images, images.originalname];
 
+    await prisma.product.update({ data: product, where: { id } });
   } catch (error) {
-    res.status( 500 ).json( { message: "Internal server error", error: error.message } );
-  }finally {
-    await prisma.$disconnect()
+    res
+      .status(500)
+      .json({ message: "Internal server error", error: error.message });
+  } finally {
+    await prisma.$disconnect();
   }
-}
+};
 
 /**
  * @swagger
@@ -861,25 +874,36 @@ const uploadPicture = async ( req, res ) =>
  *                   type: string
  *                   example: Internal server error
  */
-const uploadDp = async ( req, res ) =>
-{
+const uploadDp = async (req, res) => {
   try {
     const { id } = req.params;
     const { dp } = req.file;
-    if(!id || !dp) return res.status(400).json({message:"Product or file is missing"})
+    if (!id || !dp)
+      return res.status(400).json({ message: "Product or file is missing" });
 
-    const product = await prisma.product.findFirstOrThrow( { where: { id, merchantId: res.merchant.id } } )
+    const product = await prisma.product.findFirstOrThrow({
+      where: { id, merchantId: res.merchant.id },
+    });
 
-    await fs.unlink( `/public/product${ product.dp }` )
-    
-    product.dp= dp.originalname
+    await fs.unlink(`/public/product${product.dp}`);
 
-    const updated = await prisma.product.update( { data: product, where: { id,merchantId:res.merchant.id } } )
+    product.dp = dp.originalname;
 
+    const updated = await prisma.product.update({
+      data: product,
+      where: { id, merchantId: res.merchant.id },
+    });
 
-    return res.status(202).json({message:"product dp updated", updated})
-
+    return res
+      .status(202)
+      .send(json({ message: "product dp updated", updated }));
   } catch (error) {
+<<<<<<< starter
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
+  } finally {
+    await prisma.$disconnect();
+=======
     console.error( error )
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
       if (e.code === "P2025")
@@ -888,18 +912,14 @@ const uploadDp = async ( req, res ) =>
     res.status( 500 ).json( { message: "Internal server error" } );
   }finally {
     await prisma.$disconnect()
+>>>>>>> master
   }
-}
-
-
+};
 
 /**
  * @dev
  * The lines below are for users who want to scroll through our product
  */
-
-
-
 
 /**
  * @swagger
@@ -960,13 +980,14 @@ const listProducts = async (req, res) => {
     const products = await prisma.product.findMany({
       skip: +req.query.skip || 0,
       take: 10,
-    } );
-  
-
-    res.status(200).json({
-      count,
-      data: products,
     });
+
+    res.status(200).send(
+      json({
+        count,
+        data: products,
+      })
+    );
   } catch (e) {
     return res
       .status(500)
@@ -975,7 +996,6 @@ const listProducts = async (req, res) => {
     await prisma.$disconnect();
   }
 };
-
 
 /**
  * @swagger
@@ -1037,15 +1057,17 @@ const listProducts = async (req, res) => {
 
 const getProductById = async (req, res) => {
   try {
+<<<<<<< starter
+    const { id } = req.params;
+=======
     const {id} = req.params
     console.log(id)
+>>>>>>> master
     const product = await prisma.product.findFirstOrThrow({
       where: { id },
-    } );
-    
-    res.status(200).json({
-      product,
     });
+
+    res.status(200).send(json(product));
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
       if (e.code === "P2025")
@@ -1059,6 +1081,9 @@ const getProductById = async (req, res) => {
   }
 };
 
+<<<<<<< starter
+const listcategory = async (req, res) => {
+=======
 
 /**
  * @swagger
@@ -1115,17 +1140,18 @@ const getProductById = async (req, res) => {
 
 const listcategory = async ( req, res ) =>
 {
+>>>>>>> master
   try {
     const category = {
       FASHION: "fashion",
       ELECTRONICS: "elecronics",
       LIFESTYLE: "lifestyle",
       PHONE: "phone",
-      ACCESSORIES:"accessories",
+      ACCESSORIES: "accessories",
       AUTOMOBILE: "automobiles",
-      GROCERRIES:"grocerries",
-    }
-    return res.status(200).json({category})
+      GROCERRIES: "grocerries",
+    };
+    return res.status(200).json({ category });
   } catch (e) {
     return res
       .status(500)
@@ -1133,8 +1159,11 @@ const listcategory = async ( req, res ) =>
   } finally {
     await prisma.$disconnect();
   }
-}
+};
 
+<<<<<<< starter
+const getProductByCategory = async (req, res) => {
+=======
 /**
  * @swagger
  * /product/category:
@@ -1194,21 +1223,25 @@ const listcategory = async ( req, res ) =>
 
 const getProducByCategory = async ( req, res ) =>
 {
+>>>>>>> master
   try {
     const { category, skip } = req.query;
-    const count = await prisma.product.count( {
+    if (!category) return res.status(400).send("No category provided");
+
+    const count = await prisma.product.count({
       where: {
-      category: category.toUpperCase()
-    }})
-    const products = await prisma.product.findMany( {
+        category: category.toUpperCase(),
+      },
+    });
+    const products = await prisma.product.findMany({
       where: {
-      category: category.toUpperCase()
+        category: category.toUpperCase(),
       },
       skip: +skip || 0,
       take: 10,
-    } )
+    });
 
-    return res.status(202).json({products, count})
+    return res.status(202).send(json({ products, count }));
   } catch (e) {
     return res
       .status(500)
@@ -1216,8 +1249,11 @@ const getProducByCategory = async ( req, res ) =>
   } finally {
     await prisma.$disconnect();
   }
-}
+};
 
+<<<<<<< starter
+const searchFilter = async (req, res) => {
+=======
 /**
  * @swagger
  * /product/search:
@@ -1297,15 +1333,17 @@ const getProducByCategory = async ( req, res ) =>
  */
 const searchFilter = async ( req, res ) =>
 {
+>>>>>>> master
   try {
     const { search, skip, minPrice, maxPrice } = req.query;
-    let whereClause = {}
+    let whereClause = {};
 
-    if ( !search ) return res.status( 400 ).json( { message: "enter a search word" } )
+    if (!search)
+      return res.status(400).json({ message: "enter a search word" });
     whereClause.name = {
       contains: search,
-      mode: "insensitive"
-    }
+      mode: "insensitive",
+    };
 
     if (minPrice && !isNaN(minPrice)) {
       whereClause.price = {
@@ -1320,25 +1358,24 @@ const searchFilter = async ( req, res ) =>
       };
     }
 
-    const count = await prisma.product.count( {
-      where: whereClause
-    } )
-    const products = await prisma.product.findMany( {
+    const count = await prisma.product.count({
+      where: whereClause,
+    });
+    const products = await prisma.product.findMany({
       where: whereClause,
       skip: +skip || 0,
       take: 10,
-    } )
-    return res.status(202).json({products,count})
+    });
+    return res.status(202).send(json({ products, count }));
   } catch (e) {
-    console.error(e.message)
+    console.error(e.message);
     return res
       .status(500)
-      .json( { message: "internal server error", error: e.message } );
-    
+      .json({ message: "internal server error", error: e.message });
   } finally {
     await prisma.$disconnect();
   }
-}
+};
 
 module.exports = {
   createProduct,
@@ -1352,6 +1389,6 @@ module.exports = {
   uploadDp,
   uploadPicture,
   listcategory,
-  getProducByCategory,
-  searchFilter
+  getProductByCategory,
+  searchFilter,
 };

@@ -32,11 +32,11 @@ enum Category {
 }
 
 model Waitlist {
-  id           String  @id @default(uuid())
-  email        String  @unique
-  isSubscribed Boolean @default(true)
-  createdAt  DateTime       @default(now())
-  updatedAt  DateTime       @updatedAt
+  id           String   @id @default(uuid())
+  email        String   @unique
+  isSubscribed Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model User {
@@ -51,52 +51,52 @@ model User {
   refresh_token      String[]
   address            String[]
   resetPasswordToken String?
-  createdAt  DateTime       @default(now())
-  updatedAt  DateTime       @updatedAt
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   cartItems CartItem[]
   orders    Order[]
 }
 
 model Merchant {
-  id       String    @id @default(uuid())
-  name     String
-  email    String    @unique
-  phone_number String
-  username String @unique
-  password String
-  verification_code String?
-  address String
-  city String
-  country String
-  dp String
+  id                 String    @id @default(uuid())
+  name               String
+  email              String    @unique
+  phone_number       String
+  username           String    @unique
+  password           String
+  verification_code  String?
+  address            String
+  city               String
+  country            String
+  dp                 String
   refresh_token      String[]
   resetPasswordToken String?
-  createdAt  DateTime       @default(now())
-  updatedAt  DateTime       @updatedAt
-  products Product[]
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  products           Product[]
 }
 
 model Product {
-  id         String         @id @default(uuid())
-  name       String
-  description       String
-  price      Decimal
-  Merchant   Merchant       @relation(fields: [merchantId], references: [id])
-  merchantId String
-  category Category
-  dp String
-  images String[]
-  quantity BigInt
-  isInStock Boolean @default(true)
-  color String[]
-  dimension Json?
-  ratings Decimal[]
-  
-  createdAt  DateTime       @default(now())
-  updatedAt  DateTime       @updatedAt
-  cartItems  CartItem[]
-  products   OrderProduct[]
+  id          String    @id @default(uuid())
+  name        String
+  description String
+  price       Decimal
+  Merchant    Merchant  @relation(fields: [merchantId], references: [id])
+  merchantId  String
+  category    Category
+  dp          String
+  images      String[]
+  quantity    BigInt
+  isInStock   Boolean   @default(true)
+  color       String[]
+  dimension   Json?
+  ratings     Decimal[]
+
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  cartItems CartItem[]
+  products  OrderProduct[]
 
   @@map("products")
 }
