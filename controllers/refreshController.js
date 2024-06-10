@@ -49,7 +49,7 @@ const refresh = async ( req, res ) =>
 
             const oldRefresh = cookies.refreshToken;
 
-            const foundUser = await prisma.user.findFirst( {
+            const foundUser = await prisma.user.findUniqueOrThrow( {
                   where: {
                         refresh_token: {
                         has: oldRefresh
@@ -57,7 +57,6 @@ const refresh = async ( req, res ) =>
                   }
             } )
             
-            if ( !foundUser ) return res.sendStatus( 403 );
 
             jwt.verify( oldRefresh, process.env.REFRESH_TOKEN_SECRET, async ( err, decoded ) =>
             {
@@ -95,7 +94,11 @@ const refresh = async ( req, res ) =>
                   return res.status(200).json({accessToken})
             })
 
-      } catch (e) {
+      } catch ( e ) {
+            if (e instanceof Prisma.PrismaClientKnownRequestError) {
+                  if (e.code === "P2025")
+                  return res.sendStatus( 403 );
+            }
             return res.status(500).json({message:"internal server error", error:e})
       } finally {
             await prisma.$disconnect()
@@ -149,7 +152,7 @@ const merchantRefresh = async ( req, res ) =>
 
             const oldRefresh = cookies.refreshToken;
 
-            const foundUser = await prisma.merchant.findFirst( {
+            const foundUser = await prisma.merchant.findUniqueOrThrow( {
                   where: {
                         refresh_token: {
                         has: oldRefresh
@@ -195,7 +198,11 @@ const merchantRefresh = async ( req, res ) =>
                   return res.status(200).json({accessToken})
             })
 
-      } catch (e) {
+      } catch ( e ) {
+            if (e instanceof Prisma.PrismaClientKnownRequestError) {
+                  if (e.code === "P2025")
+                  return res.sendStatus( 403 );
+            }
             return res.status(500).json({message:"internal server error", error:e})
       } finally {
             await prisma.$disconnect()

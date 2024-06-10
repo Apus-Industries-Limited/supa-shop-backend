@@ -371,7 +371,7 @@ const loginMerchant = async (req, res) => {
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
       if (e.code === "P2025")
-        return res.status(404).json({ message: "User not found" });
+        return res.status(404).json({ message: "Merchant not found" });
     }
     return res.status(500).json({ message: "internal server error", error: e });
   } finally {
@@ -450,13 +450,12 @@ const forgotMerchantPassword = async (req, res) => {
     if (!email) return res.status(400).json({ message: "Email is required" });
 
     // Checking if the user exists
-    const user = await prisma.merchant.findUnique({
+    const user = await prisma.merchant.findUniqueOrThrow({
       where: {
         email,
       },
     });
 
-    if (!user) return res.status(404).json({ message: "User not found" });
 
     const resetToken = jwt.sign(
       { user: user.email },
@@ -535,7 +534,11 @@ const forgotMerchantPassword = async (req, res) => {
     await sendMail(from, email, subject, html);
 
     res.status(200).json({ message: "Password reset link sent to your email" });
-  } catch (e) {
+  } catch ( e ) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError) {
+      if (e.code === "P2025")
+        return res.status(404).json({ message: "Merchant not found" });
+    }
     return res
       .status(500)
       .json({ message: "internal server error", error: e.message });
@@ -620,13 +623,14 @@ const resetMerchantPassword = async (req, res) => {
       });
     }
 
-    const user = await prisma.merchant.findUnique({
+    const user = await prisma.merchant.findUniqueOrThrow({
       where: {
         email,
         resetPasswordToken: token,
       },
     });
     // console.log(user, "user");
+<<<<<<< starter
     if (!user)
       return res
         .status(400)
@@ -637,6 +641,11 @@ const resetMerchantPassword = async (req, res) => {
       return res
         .status(400)
         .json({ message: "New password must be differnt from old password" });
+=======
+        
+        const validate = await argon.verify(user.password,password)
+        if (validate) return res.status(400).json({message:"New password must be differnt from old password"})
+>>>>>>> master
     const hashedPassword = await argon.hash(password);
 
     // Update user with the new password and remove reset token
@@ -648,7 +657,11 @@ const resetMerchantPassword = async (req, res) => {
       },
     });
     res.status(200).json({ message: "Password reset successful" });
-  } catch (e) {
+  } catch ( e ) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError) {
+      if (e.code === "P2025")
+        return res.status(404).json({ message: "Merchant not found" });
+    }
     if (e.message === "Invalid or expired reset token") {
       return res
         .status(400)

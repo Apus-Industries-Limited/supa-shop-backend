@@ -617,6 +617,7 @@ const deletePicture = async (req, res) => {
         id: product.id,
         merchantId: res.merchant.id,
       },
+<<<<<<< starter
       data: product,
     });
 
@@ -632,6 +633,22 @@ const deletePicture = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   } finally {
     await prisma.$disconnect();
+=======
+      data: product
+    } )
+    
+    await fs.unlink( `/public/product${ image }` )
+    res.status(200).json({message:"Image has been deleted",product:updatedProduct})
+  } catch ( error ) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError) {
+      if (e.code === "P2025")
+        return res.status(404).json({ message: "Product not found" });
+    }
+    if(error.code === 'ENOENT') return res.status(404).json({message:"Images were not found"})
+    res.status( 500 ).json( { message: "Internal server error" } );
+  }finally {
+    await prisma.$disconnect()
+>>>>>>> master
   }
 };
 
@@ -881,10 +898,21 @@ const uploadDp = async (req, res) => {
       .status(202)
       .send(json({ message: "product dp updated", updated }));
   } catch (error) {
+<<<<<<< starter
     console.error(error);
     res.status(500).json({ message: "Internal server error" });
   } finally {
     await prisma.$disconnect();
+=======
+    console.error( error )
+    if (e instanceof Prisma.PrismaClientKnownRequestError) {
+      if (e.code === "P2025")
+        return res.status(404).json({ message: "Product not found" });
+    }
+    res.status( 500 ).json( { message: "Internal server error" } );
+  }finally {
+    await prisma.$disconnect()
+>>>>>>> master
   }
 };
 
@@ -984,14 +1012,27 @@ const listProducts = async (req, res) => {
  *           type: string
  *     responses:
  *       200:
- *         description: Successful operation
+ *         description: Product found
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
  *                 product:
- *                   $ref: '#/components/schemas/Product'
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                       example: "123"
+ *                     name:
+ *                       type: string
+ *                       example: "Product Name"
+ *                     price:
+ *                       type: number
+ *                       example: 99.99
+ *                     description:
+ *                       type: string
+ *                       example: "Product Description"
  *       404:
  *         description: Product not found
  *         content:
@@ -1016,7 +1057,12 @@ const listProducts = async (req, res) => {
 
 const getProductById = async (req, res) => {
   try {
+<<<<<<< starter
     const { id } = req.params;
+=======
+    const {id} = req.params
+    console.log(id)
+>>>>>>> master
     const product = await prisma.product.findFirstOrThrow({
       where: { id },
     });
@@ -1035,7 +1081,66 @@ const getProductById = async (req, res) => {
   }
 };
 
+<<<<<<< starter
 const listcategory = async (req, res) => {
+=======
+
+/**
+ * @swagger
+ * /product/categories:
+ *   get:
+ *     summary: List all categories
+ *     tags: [Product]
+ *     responses:
+ *       200:
+ *         description: A list of categories
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 category:
+ *                   type: object
+ *                   properties:
+ *                     FASHION:
+ *                       type: string
+ *                       example: fashion
+ *                     ELECTRONICS:
+ *                       type: string
+ *                       example: electronics
+ *                     LIFESTYLE:
+ *                       type: string
+ *                       example: lifestyle
+ *                     PHONE:
+ *                       type: string
+ *                       example: phone
+ *                     ACCESSORIES:
+ *                       type: string
+ *                       example: accessories
+ *                     AUTOMOBILE:
+ *                       type: string
+ *                       example: automobiles
+ *                     GROCERRIES:
+ *                       type: string
+ *                       example: groceries
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: internal server error
+ *                 error:
+ *                   type: string
+ *                   example: error message
+ */
+
+const listcategory = async ( req, res ) =>
+{
+>>>>>>> master
   try {
     const category = {
       FASHION: "fashion",
@@ -1056,7 +1161,69 @@ const listcategory = async (req, res) => {
   }
 };
 
+<<<<<<< starter
 const getProductByCategory = async (req, res) => {
+=======
+/**
+ * @swagger
+ * /product/category:
+ *   get:
+ *     tags: [Product]
+ *     summary: Retrieve products by category
+ *     description: Retrieve a list of products based on the specified category. The results are paginated.
+ *     parameters:
+ *       - in: query
+ *         name: category
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The category of the products
+ *       - in: query
+ *         name: skip
+ *         required: false
+ *         schema:
+ *           type: integer
+ *         description: The number of items to skip before starting to collect the result set
+ *     responses:
+ *       202:
+ *         description: A list of products
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 products:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       name:
+ *                         type: string
+ *                       category:
+ *                         type: string
+ *                       price:
+ *                         type: number
+ *                         format: float
+ *                 count:
+ *                   type: integer
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 error:
+ *                   type: string
+ */
+
+const getProducByCategory = async ( req, res ) =>
+{
+>>>>>>> master
   try {
     const { category, skip } = req.query;
     if (!category) return res.status(400).send("No category provided");
@@ -1084,7 +1251,89 @@ const getProductByCategory = async (req, res) => {
   }
 };
 
+<<<<<<< starter
 const searchFilter = async (req, res) => {
+=======
+/**
+ * @swagger
+ * /product/search:
+ *   get:
+ *     tags: [Product]
+ *     summary: Search and filter products
+ *     description: Retrieve a list of products based on search criteria and price range. The results are paginated.
+ *     parameters:
+ *       - in: query
+ *         name: search
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The search keyword for the product name
+ *       - in: query
+ *         name: skip
+ *         required: false
+ *         schema:
+ *           type: integer
+ *         description: The number of items to skip before starting to collect the result set
+ *       - in: query
+ *         name: minPrice
+ *         required: false
+ *         schema:
+ *           type: number
+ *           format: float
+ *         description: The minimum price of the products
+ *       - in: query
+ *         name: maxPrice
+ *         required: false
+ *         schema:
+ *           type: number
+ *           format: float
+ *         description: The maximum price of the products
+ *     responses:
+ *       202:
+ *         description: A list of products
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 products:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       name:
+ *                         type: string
+ *                       price:
+ *                         type: number
+ *                         format: float
+ *                 count:
+ *                   type: integer
+ *       400:
+ *         description: Bad Request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 error:
+ *                   type: string
+ */
+const searchFilter = async ( req, res ) =>
+{
+>>>>>>> master
   try {
     const { search, skip, minPrice, maxPrice } = req.query;
     let whereClause = {};

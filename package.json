@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "prisma db push && node --watch index",
+    "dev": "nodemon index",
     "db-update": "prisma db push",
     "start": "prisma db push && node index"
   },
@@ -29,5 +29,8 @@
     "prisma": "^5.12.1",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.2"
   }
 }
