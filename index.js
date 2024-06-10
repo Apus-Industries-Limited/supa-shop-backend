@@ -1,5 +1,7 @@
 require("dotenv").config();
 const compression = require("compression");
+const cluster = require("cluster");
+const os = require("os");
 const express = require("express");
 const cors = require("cors");
 const credentials = require("./middleware/credentials");
@@ -12,76 +14,98 @@ const multer = require("multer");
 const morgan = require("morgan");
 
 const PORT = process.env.PORT || 3500;
-const app = express();
+const numCPUs = os.cpus().length;
 
-app.use(compression({
-  level: 8,
-  threshold: 1024,
-} ) );
+if (cluster.isMaster) {
+  console.log(`Master process ${process.pid} is running`);
 
-// Middlewares
-app.use(credentials);
-app.use(cors());
-const storage = multer.diskStorage({
-  destination: "./public/product",
-  filename: (req, file, cb) => {
-    cb(null, file.originalname);
-  },
-});
+  for (let i = 0; i < numCPUs; i++) {
+    cluster.fork();
+  }
 
-const storeStorage = multer.diskStorage({
-  destination: "./public/store",
-  filename: (req, file, cb) => {
-    cb(null, file.originalname);
-  },
-});
+  cluster.on("exit", (worker, code, signal) => {
+    console.log(`Worker process ${worker.process.pid} died. Restarting...`);
+    cluster.fork();
+  });
+} else {
+  const app = express();
+  app.use(morgan("dev"));
 
-const storeUpload = multer({ storeStorage });
-const storecp = storeUpload.fields([{ name: "dp", maxCount: 1 }]);
-
-const upload = multer({ storage });
-const cp = upload.fields([
-  { name: "dp", maxCount: 1 },
-  { name: "images", maxCount: 3 },
-]);
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
-
-app.use(express.static("public"));
-
-app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-app.use("/waitlist", require("./routes/waitlist"));
-app.use("/refresh", require("./routes/refresh"));
-app.use("/auth", require("./routes/auth"));
-app.use("/logout", require("./routes/logout"));
-app.use("/verify-mail", require("./routes/verify"));
-app.use("/product", require("./routes/product"));
-app.use("/merchant/auth", storecp, require("./routes/merchantAuth"));
-
-// Routes which requires authorization
-app.use(verifyJwt);
-
-app.use(verifyMerchant);
-app.use("/merchant/product", cp, require("./routes/merchant"));
-
-app.listen(PORT, () => {
-  figlet.text(
-    "SupaShop API 1.0",
-    {
-      font: "Doom",
-      horizontalLayout: "default",
-      verticalLayout: "default",
-      width: 100,
-      whitespaceBreak: true,
-    },
-    (err, asciiArt) => {
-      if (err) {
-        console.error(err);
-        return;
-      }
-      console.log(asciiArt);
-      console.log(`server is running on port ${PORT}`);
-    }
+  app.use(
+    compression({
+      level: 8,
+      threshold: 1024,
+    })
   );
-});
+
+  // Middlewares
+  app.use(credentials);
+  app.use(cors());
+  const storage = multer.diskStorage({
+    destination: "./public/product",
+    filename: (req, file, cb) => {
+      cb(null, file.originalname);
+    },
+  });
+
+  const storeStorage = multer.diskStorage({
+    destination: "./public/store",
+    filename: (req, file, cb) => {
+      cb(null, file.originalname);
+    },
+  });
+
+  const storeUpload = multer({ storeStorage });
+  const storecp = storeUpload.fields([{ name: "dp", maxCount: 1 }]);
+
+  const upload = multer({ storage });
+  const cp = upload.fields([
+    { name: "dp", maxCount: 1 },
+    { name: "images", maxCount: 3 },
+  ]);
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: false }));
+  app.use(cookieParser());
+
+  app.use(express.static("public"));
+
+  app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+  app.use("/waitlist", require("./routes/waitlist"));
+  app.use("/refresh", require("./routes/refresh"));
+  app.use("/auth", require("./routes/auth"));
+  app.use("/logout", require("./routes/logout"));
+  app.use("/verify-mail", require("./routes/verify"));
+  app.use("/product", require("./routes/product"));
+  app.use("/merchant/auth", storecp, require("./routes/merchantAuth"));
+
+  // Routes which requires authorization
+  app.use(verifyJwt);
+  app.use("/cart", require("./routes/cart"));
+
+  app.use(verifyMerchant);
+  app.use("/merchant/product", cp, require("./routes/merchant"));
+
+  app.use(verifyMerchant);
+  app.use("/merchant/product", cp, require("./routes/merchant"));
+
+  app.listen(PORT, () => {
+    figlet.text(
+      "SupaShop API 1.0",
+      {
+        font: "Doom",
+        horizontalLayout: "default",
+        verticalLayout: "default",
+        width: 100,
+        whitespaceBreak: true,
+      },
+      (err, asciiArt) => {
+        if (err) {
+          console.error(err);
+          return;
+        }
+        console.log(asciiArt);
+        console.log(`server is running on port ${PORT}`);
+      }
+    );
+  });
+}

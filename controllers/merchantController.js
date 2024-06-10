@@ -106,7 +106,7 @@ const prisma = new PrismaClient();
 const createMerchant = async ( req, res ) =>
 {
       const { name, email, phone_number, username, password, address, city, country } = req.body;
-      const { dp } = req.file;
+      const { dp } = req.files;
   try {
     if (
       !name ||

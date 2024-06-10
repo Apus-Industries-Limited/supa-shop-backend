@@ -1,4 +1,5 @@
 const { PrismaClient, Prisma } = require("@prisma/client");
+const { json } = require("../utils/bigint-serializer");
 const fs = require("fs").promises;
 
 const prisma = new PrismaClient();
@@ -126,13 +127,10 @@ const createProduct = async (req, res) => {
   try {
     if (!name || !price || !description || !category || !quantity || !dp)
       return res.status(400).json({ message: "All field is required" });
-    if (images.length < 1)
+    if (!images)
       return res
         .status(400)
         .json({ message: "Add a minimum of 1 extra image of the product" });
-
-    if (res.merchant.id)
-      return res.status(401).json({ message: "merchant not logged in" });
 
     const product = await prisma.product.create({
       data: {
@@ -147,7 +145,7 @@ const createProduct = async (req, res) => {
       },
     });
 
-    res.status(201).json({ product });
+    res.status(201).send(json(product));
   } catch (e) {
     return res
       .status(500)
@@ -262,7 +260,7 @@ const updateProduct = async (req, res) => {
       data: product,
     });
 
-    res.status(200).json({ updatedProduct });
+    res.status(200).send(json(updatedProduct));
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
       if (e.code === "P2025")
@@ -440,9 +438,7 @@ const getMerchantProduct = async (req, res) => {
       skip: +req.query.skip || 0,
       take: 10,
     });
-    res.status(200).json({
-      product,
-    });
+    res.status(200).send(json(product));
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
       if (e.code === "P2025")
@@ -531,9 +527,7 @@ const getSingleProductMerchant = async (req, res) => {
     const product = await prisma.product.findFirstOrThrow({
       where: { merchantId: res.merchant.id, id },
     });
-    res.status(200).json({
-      product,
-    });
+    res.status(200).send(json(product));
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
       if (e.code === "P2025")
@@ -629,7 +623,9 @@ const deletePicture = async (req, res) => {
     await fs.unlink(`/public/product${image}`);
     res
       .status(200)
-      .json({ message: "Image has been deleted", product: updatedProduct });
+      .send(
+        json({ message: "Image has been deleted", product: updatedProduct })
+      );
   } catch (error) {
     if (error.code === "ENOENT")
       return res.status(404).json({ message: "Images were not found" });
@@ -881,7 +877,9 @@ const uploadDp = async (req, res) => {
       where: { id, merchantId: res.merchant.id },
     });
 
-    return res.status(202).json({ message: "product dp updated", updated });
+    return res
+      .status(202)
+      .send(json({ message: "product dp updated", updated }));
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal server error" });
@@ -956,10 +954,12 @@ const listProducts = async (req, res) => {
       take: 10,
     });
 
-    res.status(200).json({
-      count,
-      data: products,
-    });
+    res.status(200).send(
+      json({
+        count,
+        data: products,
+      })
+    );
   } catch (e) {
     return res
       .status(500)
@@ -1021,9 +1021,7 @@ const getProductById = async (req, res) => {
       where: { id },
     });
 
-    res.status(200).json({
-      product,
-    });
+    res.status(200).send(json(product));
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
       if (e.code === "P2025")
@@ -1058,9 +1056,11 @@ const listcategory = async (req, res) => {
   }
 };
 
-const getProducByCategory = async (req, res) => {
+const getProductByCategory = async (req, res) => {
   try {
     const { category, skip } = req.query;
+    if (!category) return res.status(400).send("No category provided");
+
     const count = await prisma.product.count({
       where: {
         category: category.toUpperCase(),
@@ -1074,7 +1074,7 @@ const getProducByCategory = async (req, res) => {
       take: 10,
     });
 
-    return res.status(202).json({ products, count });
+    return res.status(202).send(json({ products, count }));
   } catch (e) {
     return res
       .status(500)
@@ -1117,7 +1117,7 @@ const searchFilter = async (req, res) => {
       skip: +skip || 0,
       take: 10,
     });
-    return res.status(202).json({ products, count });
+    return res.status(202).send(json({ products, count }));
   } catch (e) {
     console.error(e.message);
     return res
@@ -1140,6 +1140,6 @@ module.exports = {
   uploadDp,
   uploadPicture,
   listcategory,
-  getProducByCategory,
+  getProductByCategory,
   searchFilter,
 };
