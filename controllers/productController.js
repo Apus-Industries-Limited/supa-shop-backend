@@ -884,8 +884,6 @@ const uploadDp = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal server error" });
-  } finally {
-    await prisma.$disconnect();
     console.error( error )
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
       if (e.code === "P2025")
@@ -1040,7 +1038,7 @@ const getProductById = async (req, res) => {
   try {
 
     const { id } = req.params;
-=======
+
     const {id} = req.params
     console.log(id)
 
@@ -1064,7 +1062,7 @@ const getProductById = async (req, res) => {
 
 
 const listcategory = async (req, res) => {
-=======
+
 
 /**
  * @swagger
@@ -1144,7 +1142,7 @@ const listcategory = async ( req, res ) =>
 
 
 const getProductByCategory = async (req, res) => {
-=======
+
 /**
  * @swagger
  * /product/category:
@@ -1234,7 +1232,7 @@ const getProducByCategory = async ( req, res ) =>
 
 
 const searchFilter = async (req, res) => {
-=======
+
 /**
  * @swagger
  * /product/search:
