@@ -1197,7 +1197,7 @@ const listcategory = async ( req, res ) =>
  *                   type: string
  */
 
-const getProducByCategory = async ( req, res ) =>
+const getProductByCategory = async ( req, res ) =>
 {
 
   try {
