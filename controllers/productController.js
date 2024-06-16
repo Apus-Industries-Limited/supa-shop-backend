@@ -633,21 +633,7 @@ const deletePicture = async (req, res) => {
   } finally {
     await prisma.$disconnect();
       data: product
-    } )
-    
-    await fs.unlink( `/public/product${ image }` )
-    res.status(200).json({message:"Image has been deleted",product:updatedProduct})
-  } catch ( error ) {
-    if (e instanceof Prisma.PrismaClientKnownRequestError) {
-      if (e.code === "P2025")
-        return res.status(404).json({ message: "Product not found" });
-    }
-    if(error.code === 'ENOENT') return res.status(404).json({message:"Images were not found"})
-    res.status( 500 ).json( { message: "Internal server error" } );
-  }finally {
-    await prisma.$disconnect()
-
-  }
+    } 
 };
 
 /**
