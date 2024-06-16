@@ -617,7 +617,6 @@ const deletePicture = async (req, res) => {
         id: product.id,
         merchantId: res.merchant.id,
       },
-<<<<<<< starter
       data: product,
     });
 
@@ -633,7 +632,6 @@ const deletePicture = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   } finally {
     await prisma.$disconnect();
-=======
       data: product
     } )
     
