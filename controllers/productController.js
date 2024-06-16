@@ -1039,9 +1039,6 @@ const getProductById = async (req, res) => {
 
     const { id } = req.params;
 
-    const {id} = req.params
-    console.log(id)
-
     const product = await prisma.product.findFirstOrThrow({
       where: { id },
     });
@@ -1061,7 +1058,7 @@ const getProductById = async (req, res) => {
 };
 
 
-const listcategory = async (req, res) => {
+
 
 
 /**
@@ -1141,7 +1138,7 @@ const listcategory = async ( req, res ) =>
 };
 
 
-const getProductByCategory = async (req, res) => {
+
 
 /**
  * @swagger
@@ -1231,7 +1228,7 @@ const getProducByCategory = async ( req, res ) =>
 };
 
 
-const searchFilter = async (req, res) => {
+
 
 /**
  * @swagger
