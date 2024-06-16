@@ -646,7 +646,7 @@ const deletePicture = async (req, res) => {
     res.status( 500 ).json( { message: "Internal server error" } );
   }finally {
     await prisma.$disconnect()
->>>>>>> master
+
   }
 };
 
@@ -896,12 +896,10 @@ const uploadDp = async (req, res) => {
       .status(202)
       .send(json({ message: "product dp updated", updated }));
   } catch (error) {
-<<<<<<< starter
     console.error(error);
     res.status(500).json({ message: "Internal server error" });
   } finally {
     await prisma.$disconnect();
-=======
     console.error( error )
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
       if (e.code === "P2025")
@@ -910,7 +908,6 @@ const uploadDp = async (req, res) => {
     res.status( 500 ).json( { message: "Internal server error" } );
   }finally {
     await prisma.$disconnect()
->>>>>>> master
   }
 };
 
@@ -1055,12 +1052,12 @@ const listProducts = async (req, res) => {
 
 const getProductById = async (req, res) => {
   try {
-<<<<<<< starter
+
     const { id } = req.params;
 =======
     const {id} = req.params
     console.log(id)
->>>>>>> master
+
     const product = await prisma.product.findFirstOrThrow({
       where: { id },
     });
@@ -1079,7 +1076,7 @@ const getProductById = async (req, res) => {
   }
 };
 
-<<<<<<< starter
+
 const listcategory = async (req, res) => {
 =======
 
@@ -1138,7 +1135,7 @@ const listcategory = async (req, res) => {
 
 const listcategory = async ( req, res ) =>
 {
->>>>>>> master
+
   try {
     const category = {
       FASHION: "fashion",
@@ -1159,7 +1156,7 @@ const listcategory = async ( req, res ) =>
   }
 };
 
-<<<<<<< starter
+
 const getProductByCategory = async (req, res) => {
 =======
 /**
@@ -1221,7 +1218,7 @@ const getProductByCategory = async (req, res) => {
 
 const getProducByCategory = async ( req, res ) =>
 {
->>>>>>> master
+
   try {
     const { category, skip } = req.query;
     if (!category) return res.status(400).send("No category provided");
@@ -1249,7 +1246,7 @@ const getProducByCategory = async ( req, res ) =>
   }
 };
 
-<<<<<<< starter
+
 const searchFilter = async (req, res) => {
 =======
 /**
@@ -1331,7 +1328,7 @@ const searchFilter = async (req, res) => {
  */
 const searchFilter = async ( req, res ) =>
 {
->>>>>>> master
+
   try {
     const { search, skip, minPrice, maxPrice } = req.query;
     let whereClause = {};
