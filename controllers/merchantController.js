@@ -630,7 +630,7 @@ const resetMerchantPassword = async (req, res) => {
       },
     });
     // console.log(user, "user");
-<<<<<<< starter
+
     if (!user)
       return res
         .status(400)
@@ -641,11 +641,7 @@ const resetMerchantPassword = async (req, res) => {
       return res
         .status(400)
         .json({ message: "New password must be differnt from old password" });
-=======
-        
-        const validate = await argon.verify(user.password,password)
-        if (validate) return res.status(400).json({message:"New password must be differnt from old password"})
->>>>>>> master
+
     const hashedPassword = await argon.hash(password);
 
     // Update user with the new password and remove reset token
