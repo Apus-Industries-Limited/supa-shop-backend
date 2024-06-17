@@ -90,8 +90,13 @@ const refresh = async ( req, res ) =>
                   sameSite:"None",
                   secure: true
                   } )
+                  const user = { ...foundUser, accessToken };
+
+                        delete user.password;
+                        delete user.refresh_token;
+                        delete user.verification_code;
                   
-                  return res.status(200).json({accessToken})
+                  return res.status(200).json(user)
             })
 
       } catch ( e ) {
@@ -194,8 +199,12 @@ const merchantRefresh = async ( req, res ) =>
                   sameSite:"None",
                   secure: true
                   } )
-                  
-                  return res.status(200).json({accessToken})
+                  const user = { ...foundUser, accessToken };
+
+                        delete user.password;
+                        delete user.refresh_token;
+                        delete user.verification_code;
+                  return res.status(200).json(user)
             })
 
       } catch ( e ) {
