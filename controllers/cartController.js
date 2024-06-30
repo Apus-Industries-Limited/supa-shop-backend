@@ -53,8 +53,6 @@ const addToCart = async (req, res) => {
     return res
       .status(500)
       .json({ message: "internal server error", error: e.message });
-  } finally {
-    await prisma.$disconnect();
   }
 };
 
@@ -77,8 +75,6 @@ const removeFromCart = async (req, res) => {
     return res
       .status(500)
       .json({ message: "internal server error", error: e.message });
-  } finally {
-    await prisma.$disconnect();
   }
 };
 
@@ -130,8 +126,6 @@ const changeQuantity = async (req, res) => {
     return res
       .status(500)
       .json({ message: "internal server error", error: e.message });
-  } finally {
-    await prisma.$disconnect();
   }
 };
 
@@ -155,12 +149,16 @@ const getCart = async (req, res) => {
     return res
       .status(500)
       .json({ message: "internal server error", error: e.message });
-  } finally {
-    await prisma.$disconnect();
   }
 };
 
+const cleanUp = async () =>
+{
+  await prisma.$disconnect();
+}
+
 module.exports = {
+  cleanUp,
   addToCart,
   removeFromCart,
   // emptyCart,

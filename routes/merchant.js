@@ -9,6 +9,7 @@ const {
   uploadDp,
   uploadPicture,
   deletePicture,
+  cleanUp,
 } = require( "../controllers/productController.js" );
 
 const router = Router();
@@ -29,4 +30,4 @@ router.route( '/:id' )
       .get( getSingleProductMerchant )
 
 
-module.exports = router;
+module.exports = {router,cleanUp};

@@ -1,7 +1,6 @@
 const { PrismaClient, Prisma } = require("@prisma/client");
-const { json } = require("../utils/bigint-serializer");
-const fs = require("fs").promises;
-
+const { json } = require( "../utils/bigint-serializer" );
+const fs = require( "fs" ).promises;
 const prisma = new PrismaClient();
 
 /**
@@ -150,8 +149,6 @@ const createProduct = async (req, res) => {
     return res
       .status(500)
       .json({ message: "internal server error", error: e.message });
-  } finally {
-    await prisma.$disconnect();
   }
 };
 
@@ -269,8 +266,6 @@ const updateProduct = async (req, res) => {
     return res
       .status(500)
       .json({ message: "internal server error", error: e.message });
-  } finally {
-    await prisma.$disconnect();
   }
 };
 
@@ -346,7 +341,7 @@ const deleteProduct = async (req, res) => {
       async (img) => await fs.unlink(`/public/product${img}`)
     );
 
-    res.status(200).json({ message: "Product deleted successfully" });
+    res.status(200).send(json({ message: "Product deleted successfully" }));
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
       if (e.code === "P2025")
@@ -355,8 +350,6 @@ const deleteProduct = async (req, res) => {
     return res
       .status(500)
       .json({ message: "internal server error", error: e.message });
-  } finally {
-    await prisma.$disconnect();
   }
 };
 
@@ -431,13 +424,23 @@ const deleteProduct = async (req, res) => {
  *                   example: "Error details"
  */
 
-const getMerchantProduct = async (req, res) => {
+const getMerchantProduct = async ( req, res ) =>
+{
+  const skip = +req.query.skip || 0
+  const merchantId = res.merchant.id
+  const cacheKey = `merchant:${ merchantId }:products:skip:${ skip }`;
   try {
+    const cacheData = await req.redisClient.get( cacheKey );
+    if ( cacheData ) return res.status(200).json( JSON.parse( cacheData ) );
+
     const product = await prisma.product.findMany({
-      where: { merchantId: res.merchant.id },
-      skip: +req.query.skip || 0,
+      where: { merchantId },
+      skip,
       take: 10,
-    });
+    } );
+
+    await req.redisClient.set( cacheKey, JSON.stringify( product ), { EX: 3600 } )
+    
     res.status(200).send(json(product));
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
@@ -447,8 +450,6 @@ const getMerchantProduct = async (req, res) => {
     return res
       .status(500)
       .json({ message: "internal server error", error: e.message });
-  } finally {
-    await prisma.$disconnect();
   }
 };
 
@@ -521,12 +522,19 @@ const getMerchantProduct = async (req, res) => {
  *                   type: string
  *                   example: Error details
  */
-const getSingleProductMerchant = async (req, res) => {
+const getSingleProductMerchant = async ( req, res ) =>
+{
+  const merchantId = res.merchant.id;
+  const { id } = req.params;
+  const cacheKey = `merchant:${merchantId}:product:id${id}`
   try {
-    const { id } = req.params;
+    const cacheData = await req.redisClient.get( cacheKey );
+    if ( cacheData ) return res.status(200).json( JSON.parse( cacheData ) );
+    
     const product = await prisma.product.findFirstOrThrow({
-      where: { merchantId: res.merchant.id, id },
-    });
+      where: { merchantId, id },
+    } );
+    await req.redisClient.set(cacheKey,JSON.stringify(product),{EX:3600})
     res.status(200).send(json(product));
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
@@ -536,8 +544,6 @@ const getSingleProductMerchant = async (req, res) => {
     return res
       .status(500)
       .json({ message: "internal server error", error: e.message });
-  } finally {
-    await prisma.$disconnect();
   }
 };
 
@@ -599,7 +605,8 @@ const getSingleProductMerchant = async (req, res) => {
  *                   example: Internal server error
  */
 
-const deletePicture = async (req, res) => {
+const deletePicture = async ( req, res ) =>
+{
   try {
     const { image } = req.params;
     const product = await prisma.product.findFirstOrThrow({
@@ -630,10 +637,7 @@ const deletePicture = async (req, res) => {
     if (error.code === "ENOENT")
       return res.status(404).json({ message: "Images were not found" });
     res.status(500).json({ message: "Internal server error" });
-  } finally {
-    await prisma.$disconnect();
-      data: product
-    } 
+  }
 };
 
 /**
@@ -749,8 +753,6 @@ const uploadPicture = async (req, res) => {
     res
       .status(500)
       .json({ message: "Internal server error", error: error.message });
-  } finally {
-    await prisma.$disconnect();
   }
 };
 
@@ -953,26 +955,32 @@ const uploadDp = async (req, res) => {
  *                   example: Error details
  */
 
-const listProducts = async (req, res) => {
+const listProducts = async ( req, res ) =>
+{
+  const skip = +req.query.skip || 0;
+  const cacheKey = `products:skip:${ skip }`;
   try {
-    const count = await prisma.product.count();
+    const cacheData = await req.redisClient.get( cacheKey );
+    if ( cacheData) return res.status(200).json( JSON.parse( cacheData ));
     const products = await prisma.product.findMany({
-      skip: +req.query.skip || 0,
+      skip,
       take: 10,
-    });
+    } );
+    
+    await req.redisClient.set( cacheKey, JSON.stringify( products ),{EX:3600});
 
     res.status(200).send(
       json({
-        count,
         data: products,
       })
     );
-  } catch (e) {
+    
+    
+  } catch ( e ) {
+    console.error(e)
     return res
       .status(500)
       .json({ message: "internal server error", error: e.message });
-  } finally {
-    await prisma.$disconnect();
   }
 };
 
@@ -1034,14 +1042,20 @@ const listProducts = async (req, res) => {
  *                   example: Internal server error
  */
 
-const getProductById = async (req, res) => {
+const getProductById = async ( req, res ) =>
+{
+  const { id } = req.params;
+    const cacheKey = `product:id${id}`
   try {
+    const cacheData = await req.redisClient.get( cacheKey );
+    if ( cacheData ) return res.status(200).json( JSON.parse( cacheData ) );
 
-    const { id } = req.params;
 
     const product = await prisma.product.findFirstOrThrow({
       where: { id },
-    });
+    } );
+    
+    await req.redisClient.set(cacheKey,JSON.stringify(product),{EX:3600})
 
     res.status(200).send(json(product));
   } catch (e) {
@@ -1052,8 +1066,6 @@ const getProductById = async (req, res) => {
     return res
       .status(500)
       .json({ message: "internal server error", error: e.message });
-  } finally {
-    await prisma.$disconnect();
   }
 };
 
@@ -1116,8 +1128,10 @@ const getProductById = async (req, res) => {
 
 const listcategory = async ( req, res ) =>
 {
-
+const cacheKey = "categories"
   try {
+    const cacheData = await req.redisClient.get( cacheKey );
+    if ( cacheData ) return res.status(200).json( JSON.parse( cacheData ) );
     const category = {
       FASHION: "fashion",
       ELECTRONICS: "elecronics",
@@ -1127,13 +1141,12 @@ const listcategory = async ( req, res ) =>
       AUTOMOBILE: "automobiles",
       GROCERRIES: "grocerries",
     };
+    await req.redisClient.set(cacheKey,JSON.stringify(category),{EX:3600})
     return res.status(200).json({ category });
   } catch (e) {
     return res
       .status(500)
       .json({ message: "internal server error", error: e.message });
-  } finally {
-    await prisma.$disconnect();
   }
 };
 
@@ -1199,31 +1212,30 @@ const listcategory = async ( req, res ) =>
 
 const getProductByCategory = async ( req, res ) =>
 {
-
+  const skip = +req.query.skip || 0;
+  const category = req.query.category;
+  const cacheKey = `products:category:${category}:skip:${ skip }`;
   try {
-    const { category, skip } = req.query;
+    const cacheData = await req.redisClient.get( cacheKey );
+    if ( cacheData ) return res.status( 200 ).json( JSON.parse( cacheData ) );
+    
     if (!category) return res.status(400).send("No category provided");
 
-    const count = await prisma.product.count({
-      where: {
-        category: category.toUpperCase(),
-      },
-    });
     const products = await prisma.product.findMany({
       where: {
         category: category.toUpperCase(),
       },
       skip: +skip || 0,
       take: 10,
-    });
-
-    return res.status(202).send(json({ products, count }));
+    } );
+    
+    await req.redisClient.set( cacheKey, JSON.stringify( products ), { EX: 3600 } );
+    
+    return res.status(202).send(json(products));
   } catch (e) {
     return res
       .status(500)
       .json({ message: "internal server error", error: e.message });
-  } finally {
-    await prisma.$disconnect();
   }
 };
 
@@ -1348,12 +1360,17 @@ const searchFilter = async ( req, res ) =>
     return res
       .status(500)
       .json({ message: "internal server error", error: e.message });
-  } finally {
-    await prisma.$disconnect();
   }
 };
 
+const cleanUp = async () =>
+{
+  await prisma.$disconnect();
+  req.redisClient.quit();
+}
+
 module.exports = {
+  cleanUp,
   createProduct,
   getProductById,
   deleteProduct,

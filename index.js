@@ -1,32 +1,29 @@
 require("dotenv").config();
 const compression = require( "compression" )
-const cluster = require('cluster');
-const os = require('os');
 const express = require("express");
 const cors = require("cors");
 const credentials = require("./middleware/credentials");
 const { verifyJwt,verifyMerchant } = require("./middleware/auth");
 const cookieParser = require( "cookie-parser" );
 const { swaggerSpec, swaggerUi } = require( './utils/swagger' )
-const figlet = require('figlet');
+const figlet = require( 'figlet' );
 const multer = require( 'multer' );
 
+const waitlist = require( "./routes/waitlist" );
+const refresh = require( "./routes/refresh" );
+const auth = require( "./routes/auth" );
+const logout = require( "./routes/logout" )
+const verify = require("./routes/verify")
+const product = require( "./routes/product" )
+const merchantAuth = require("./routes/merchantAuth")
+const cart = require("./routes/cart")
+const merchant = require("./routes/merchant");
+const { redisMiddleware } = require( "./middleware/redis" );
+
 const PORT = process.env.PORT || 3500;
-const numCPUs = os.cpus().length;
 
-if (cluster.isMaster) {
-  console.log(`Master process ${process.pid} is running`);
-
-  for (let i = 0; i < numCPUs; i++) {
-    cluster.fork();
-  }
-
-  cluster.on('exit', (worker, code, signal) => {
-    console.log(`Worker process ${worker.process.pid} died. Restarting...`);
-    cluster.fork();
-  });
-}else{
-  const app = express();
+const app = express();
+  
 
   app.use(compression({
     level: 8,
@@ -58,7 +55,8 @@ if (cluster.isMaster) {
   const cp = upload.fields([{name:'dp',maxCount:1}, {name:'images',maxCount:3}])
   app.use(express.json());
   app.use(express.urlencoded({ extended: false }));
-  app.use( cookieParser() );
+app.use( cookieParser() );
+app.use( redisMiddleware );
 
   app.use(express.static("public"))
 
@@ -67,25 +65,25 @@ if (cluster.isMaster) {
     return res.status(301).redirect('/docs')
   })
   app.use("/docs", swaggerUi.serve,swaggerUi.setup(swaggerSpec));
-  app.use("/waitlist", require("./routes/waitlist"));
-  app.use("/refresh", require("./routes/refresh"));
-  app.use("/auth", require("./routes/auth"));
-  app.use( "/logout", require( "./routes/logout" ) );
-  app.use("/verify-mail", require("./routes/verify"));
-  app.use( "/product", require( "./routes/product" ) );
-  app.use("/merchant/auth",storecp,require("./routes/merchantAuth"));
+  app.use("/waitlist", waitlist.router);
+  app.use("/refresh", refresh.router);
+  app.use("/auth", auth.router);
+  app.use( "/logout", logout.router );
+  app.use("/verify-mail", verify.router);
+  app.use( "/product", product.router );
+  app.use("/merchant/auth",storecp,merchantAuth.router);
 
 
   // Routes which requires authorization
   app.use( verifyJwt );
-  app.use("/cart", require("./routes/cart"));
+  app.use("/cart", cart.router);
 
   app.use(verifyMerchant)
-  app.use('/merchant/product',cp, require("./routes/merchant"))
+  app.use('/merchant/product',cp, merchant.router)
 
 
 
-  app.listen( PORT, () =>
+  const server = app.listen( PORT, () =>
   {
     figlet.text( 'SupaShop API 1.0', {
       font: 'Doom',
@@ -103,4 +101,15 @@ if (cluster.isMaster) {
     } );
         
   } );
-}
+
+process.on( "SIGINT", async () =>
+{
+  server.close( async () =>
+  {
+    Promise.all( [ auth.cleanUp(), waitlist.cleanUp(), refresh.cleanUp(), logout.cleanUp(), verify.cleanUp(), product.cleanUp(), merchantAuth.cleanUp(), cart.cleanUp(),
+      merchant.cleanUp()
+    ])
+  })
+})
+
+

@@ -4,6 +4,7 @@ const {
   loginUser,
   forgotPassword,
   resetPassword,
+  cleanUp,
 } = require("../controllers/authController");
 const router = express.Router();
 
@@ -11,4 +12,4 @@ router.post( "/register", createUser );
 router.post("/login", loginUser);
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
-module.exports = router;
+module.exports = {router, cleanUp}

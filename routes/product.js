@@ -5,6 +5,7 @@ const {
   listcategory,
   getProductByCategory,
   searchFilter,
+  cleanUp,
 } = require("../controllers/productController.js");
 
 const router = Router();
@@ -15,4 +16,4 @@ router.get("/category", getProductByCategory);
 router.get("/search", searchFilter);
 router.get("/:id", getProductById);
 
-module.exports = router;
+module.exports = {router,cleanUp};

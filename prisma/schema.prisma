@@ -92,6 +92,7 @@ model Product {
   color       String[]
   dimension   Json?
   ratings     Decimal[]
+  isFeatured Boolean @default(false)
 
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt

@@ -4,6 +4,7 @@ const {
   removeFromCart,
   changeQuantity,
   getCart,
+  cleanUp,
   // emptyCart,
 } = require("../controllers/cartController.js");
 
@@ -18,4 +19,4 @@ router.delete("/:id", removeFromCart);
 
 router.put("/:id", changeQuantity);
 
-module.exports = router;
+module.exports = {router,cleanUp};

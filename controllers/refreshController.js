@@ -105,8 +105,6 @@ const refresh = async ( req, res ) =>
                   return res.sendStatus( 403 );
             }
             return res.status(500).json({message:"internal server error", error:e})
-      } finally {
-            await prisma.$disconnect()
       }
 };
 
@@ -213,9 +211,11 @@ const merchantRefresh = async ( req, res ) =>
                   return res.sendStatus( 403 );
             }
             return res.status(500).json({message:"internal server error", error:e})
-      } finally {
-            await prisma.$disconnect()
       }
 }
 
-module.exports = {refresh,merchantRefresh}
+const cleanUp = async () =>
+{
+  await prisma.$disconnect();
+}
+module.exports = {refresh,merchantRefresh,cleanUp}

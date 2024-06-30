@@ -220,7 +220,6 @@ const createMerchant = async ( req, res ) =>
         },
       });
     }, 900000);
-    await prisma.$disconnect();
   }
 };
 
@@ -374,8 +373,6 @@ const loginMerchant = async (req, res) => {
         return res.status(404).json({ message: "Merchant not found" });
     }
     return res.status(500).json({ message: "internal server error", error: e });
-  } finally {
-    await prisma.$disconnect();
   }
 };
 
@@ -542,8 +539,6 @@ const forgotMerchantPassword = async (req, res) => {
     return res
       .status(500)
       .json({ message: "internal server error", error: e.message });
-  } finally {
-    await prisma.$disconnect();
   }
 };
 
@@ -666,14 +661,18 @@ const resetMerchantPassword = async (req, res) => {
     return res
       .status(500)
       .json({ message: "internal server error", error: e.message });
-  } finally {
-    await prisma.$disconnect();
   }
 };
+
+const cleanUp = async () =>
+{
+  await prisma.$disconnect();
+}
 
 module.exports = {
   createMerchant,
   loginMerchant,
   forgotMerchantPassword,
   resetMerchantPassword,
+  cleanUp
 };

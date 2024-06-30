@@ -170,9 +170,12 @@ const joinWaitlist = async (req, res) => {
         return res.status(409).json({ message: "Email already exist" });
     }
     return res.status(500).json({ message: "internal server error", error: e });
-  } finally {
-    await prisma.$disconnect();
   }
 };
 
-module.exports = { joinWaitlist };
+const cleanUp = async () =>
+{
+  await prisma.$disconnect();
+}
+
+module.exports = { joinWaitlist,cleanUp };

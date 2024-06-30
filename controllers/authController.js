@@ -179,7 +179,6 @@ const createUser = async (req, res) => {
     }
     return res.status(500).json({ message: "internal server error", error: e });
   } finally {
-    console.timeEnd("cluster")
     setTimeout(async () => {
       await prisma.user.update({
         where: { email },
@@ -188,7 +187,6 @@ const createUser = async (req, res) => {
         },
       });
     }, 900000);
-    await prisma.$disconnect();
   }
 };
 
@@ -278,7 +276,6 @@ const createUser = async (req, res) => {
 
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
-    console.time("cluster")
   try {
     if (!email || !password)
       return res.status(400).json({ message: "All field is required" });
@@ -341,10 +338,6 @@ const loginUser = async (req, res) => {
         return res.status(404).json({ message: "User not found" });
     }
     return res.status(500).json({ message: "internal server error", error: e });
-  } finally {
-    await prisma.$disconnect();
-    console.log( "disconnected from db" )
-    
   }
 };
 
@@ -509,8 +502,6 @@ const forgotPassword = async (req, res) => {
     return res
       .status(500)
       .json({ message: "internal server error", error: e.message });
-  } finally {
-    await prisma.$disconnect();
   }
 };
 
@@ -622,8 +613,11 @@ const resetPassword = async (req, res) => {
     return res
       .status(500)
       .json({ message: "internal server error", error: e.message });
-  } finally {
-    await prisma.$disconnect();
   }
 };
-module.exports = { createUser, loginUser, forgotPassword, resetPassword };
+
+const cleanUp = async () =>
+{
+  await prisma.$disconnect();
+}
+module.exports = { createUser, loginUser, forgotPassword, resetPassword,cleanUp };

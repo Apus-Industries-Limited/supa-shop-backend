@@ -3,7 +3,8 @@ const {
 createMerchant,
 loginMerchant,
 forgotMerchantPassword,
-resetMerchantPassword
+resetMerchantPassword,
+cleanUp
 } = require("../controllers/merchantController");
 const { verificationMerchantMail, verifyMerchantCode } = require( "../controllers/verificationController" );
 
@@ -17,4 +18,4 @@ router.post( '/reset-password', resetMerchantPassword )
 router.get( '/verify-mail/:email', verificationMerchantMail )
 router.post('/verify-mail', verifyMerchantCode)
 
-module.exports = router;
+module.exports = {router,cleanUp};

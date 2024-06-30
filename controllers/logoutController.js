@@ -66,8 +66,6 @@ const logout = async ( req, res ) =>
             return res.send( 202 ).json({message:"User Logged out successful"});
       } catch (e) {
             return res.status(500).json({message:"internal server error", error:e})
-      } finally {
-            await prisma.$disconnect()
       }
 };
 
@@ -134,9 +132,12 @@ const logoutMerchant = async ( req, res ) =>
             return res.send( 202 ).json({message:"Merchant Logged out successful"});
       } catch (e) {
             return res.status(500).json({message:"internal server error", error:e})
-      } finally {
-            await prisma.$disconnect()
       }
 }
 
-module.exports = {logout, logoutMerchant}
+
+const cleanUp = async () =>
+{
+  await prisma.$disconnect();
+}
+module.exports = {cleanUp,logout, logoutMerchant}

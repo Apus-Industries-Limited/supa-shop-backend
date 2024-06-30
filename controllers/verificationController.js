@@ -157,7 +157,6 @@ const verificationMail = async (req, res) => {
       },
     });
   }, 900000);
-  await prisma.$disconnect();
   }
 };
 
@@ -311,8 +310,6 @@ const verifyCode = async (req, res) => {
         return res.status(404).json({ message: "User not found" });
     }
     return res.status(500).json({ message: "internal server error", error: e });
-  } finally {
-    await prisma.$disconnect();
   }
 };
 
@@ -471,7 +468,6 @@ const verificationMerchantMail = async (req, res) => {
       },
     });
   }, 900000);
-  await prisma.$disconnect();
   }
 };
 
@@ -626,10 +622,12 @@ const verifyMerchantCode = async (req, res) => {
         return res.status(404).json({ message: "User not found" });
     }
     return res.status(500).json({ message: "internal server error", error: e });
-  } finally {
-    await prisma.$disconnect();
   }
 };
+const cleanUp = async () =>
+{
+  await prisma.$disconnect();
+}
 
 
-module.exports = { verificationMail, verifyCode,verificationMerchantMail,verifyMerchantCode };
+module.exports = { verificationMail, verifyCode,verificationMerchantMail,verifyMerchantCode,cleanUp };
