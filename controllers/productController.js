@@ -892,8 +892,6 @@ const uploadDp = async (req, res) => {
         return res.status(404).json({ message: "Product not found" });
     }
     res.status( 500 ).json( { message: "Internal server error" } );
-  }finally {
-    await prisma.$disconnect()
   }
 };
 
@@ -970,9 +968,7 @@ const listProducts = async ( req, res ) =>
     await req.redisClient.set( cacheKey, JSON.stringify( products ),{EX:3600});
 
     res.status(200).send(
-      json({
-        data: products,
-      })
+      json( products)
     );
     
     
