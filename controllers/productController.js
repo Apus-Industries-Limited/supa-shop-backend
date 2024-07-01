@@ -1221,7 +1221,7 @@ const getProductByCategory = async ( req, res ) =>
       where: {
         category: category.toUpperCase(),
       },
-      skip: +skip || 0,
+      skip,
       take: 10,
     } );
     
@@ -1341,16 +1341,12 @@ const searchFilter = async ( req, res ) =>
         lte: parseFloat(maxPrice),
       };
     }
-
-    const count = await prisma.product.count({
-      where: whereClause,
-    });
     const products = await prisma.product.findMany({
       where: whereClause,
       skip: +skip || 0,
       take: 10,
     });
-    return res.status(202).send(json({ products, count }));
+    return res.status(202).send(json(products));
   } catch (e) {
     console.error(e.message);
     return res
