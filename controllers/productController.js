@@ -2,6 +2,11 @@ const { PrismaClient, Prisma } = require("@prisma/client");
 const { json } = require( "../utils/bigint-serializer" );
 const fs = require( "fs" ).promises;
 const prisma = new PrismaClient();
+const redis = require( "redis" );
+
+const redisClient = redis.createClient( {
+  url: process.env.REDIS_URL
+});
 
 /**
  * @swagger
@@ -1358,7 +1363,8 @@ const searchFilter = async ( req, res ) =>
 const cleanUp = async () =>
 {
   await prisma.$disconnect();
-  req.redisClient.quit();
+  if ( !redisClient.isOpen ) return;
+  return redisClient.quit();
 }
 
 module.exports = {
