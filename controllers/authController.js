@@ -313,7 +313,7 @@ const loginUser = async (req, res) => {
     await prisma.user.update({
       where: { email },
       data: {
-        refresh_token: [...foundUser.refresh_token, refreshToken],
+        refresh_token: [refreshToken,...foundUser.refresh_token,],
       },
     });
 

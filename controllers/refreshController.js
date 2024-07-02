@@ -46,16 +46,17 @@ const refresh = async ( req, res ) =>
       try {
             const cookies = req.cookies;
             if ( !cookies?.refreshToken ) return res.sendStatus( 401 );
-
             const oldRefresh = cookies.refreshToken;
 
-            const foundUser = await prisma.user.findUniqueOrThrow( {
+            const foundUser = await prisma.user.findFirstOrThrow( {
                   where: {
                         refresh_token: {
-                        has: oldRefresh
+                              has:oldRefresh
+                        }
                   }
-                  }
-            } )
+            })
+
+            console.log(foundUser)
             
 
             jwt.verify( oldRefresh, process.env.REFRESH_TOKEN_SECRET, async ( err, decoded ) =>
@@ -155,7 +156,7 @@ const merchantRefresh = async ( req, res ) =>
 
             const oldRefresh = cookies.refreshToken;
 
-            const foundUser = await prisma.merchant.findUniqueOrThrow( {
+            const foundUser = await prisma.merchant.findFirstOrThrow( {
                   where: {
                         refresh_token: {
                         has: oldRefresh
