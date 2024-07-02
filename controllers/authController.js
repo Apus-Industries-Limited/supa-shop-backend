@@ -326,12 +326,11 @@ const loginUser = async (req, res) => {
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       maxAge: 30 * 24 * 60 * 60 * 1000,
-      sameSite: "None",
+      sameSite: 'None',
       secure: true,
     });
 
-    console.log( user )
-    res.status(200).json({ message: "Login was successful", user });
+    res.json({ message: "Login was successful", user });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
       if (e.code === "P2025")

@@ -19,6 +19,7 @@ const merchantAuth = require("./routes/merchantAuth")
 const cart = require("./routes/cart")
 const merchant = require("./routes/merchant");
 const { redisMiddleware } = require( "./middleware/redis" );
+const corsOption = require( "./config/corsOptions" );
 
 const PORT = process.env.PORT || 3500;
 
@@ -32,7 +33,7 @@ const app = express();
 
   // Middlewares
   app.use(credentials);
-  app.use( cors() );
+  app.use( cors(corsOption) );
   const storage = multer.diskStorage( {
       destination: './public/product',
       filename: ( req,file, cb )=>{
