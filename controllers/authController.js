@@ -280,6 +280,7 @@ const loginUser = async (req, res) => {
       return res.status(400).json({ message: "All field is required" });
     const foundUser = await prisma.user.findUniqueOrThrow({ where: { email }, select:safeUser });
 
+
     const validatePassword = await argon.verify(foundUser.password, password);
     if (!validatePassword)
       return res.status(403).json({ message: "Invalid credentials" });
@@ -317,7 +318,8 @@ const loginUser = async (req, res) => {
     });
 
     const user = { ...foundUser, accessToken };
-
+    delete user.password;
+    delete user.refresh_token;
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
@@ -332,6 +334,7 @@ const loginUser = async (req, res) => {
       if (e.code === "P2025")
         return res.status(404).json({ message: "User not found" });
     }
+    console.log(e)
     return res.status(500).json({ message: "internal server error", error: e });
   }
 };

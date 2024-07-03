@@ -11,10 +11,16 @@ const getStores = async (req,res) =>
             const cacheData = await req.redisClient.get( cacheKey );
             if ( cacheData ) return res.status( 200 ).json( JSON.parse( cacheData ) );
             
-            const stores = await prisma.merchant.findMany( {
+            const store = await prisma.merchant.findMany( {
                   skip,
                   take: 10,
                   select: safeMerchant
+            } )
+            
+            const stores= store.map( item =>
+            {
+                  const {password, refresh_token, ...rest} = item
+                  return rest;
             } )
             
             await req.redisClient.set( cacheKey, JSON.stringify( stores ), { EX: 3600 } );
@@ -87,7 +93,7 @@ const getFeatureStores = async ( req, res ) =>
       try {
             const cacheData = await req.redisClient.get( cacheKey );
             if ( cacheData ) return res.status( 200 ).json( JSON.parse( cacheData ) );
-            const stores = await prisma.merchant.findMany( {
+            const store = await prisma.merchant.findMany( {
                   where: {
                         isPromoted: true
                   }, select: safeMerchant
@@ -112,10 +118,16 @@ const getStoreCategory = async ( req, res ) =>
             
             if ( !category ) return res.status( 400 ).send( "No category provided" );
             
-            const stores = await prisma.merchant.findMany( {
+            const store = await prisma.merchant.findMany( {
                   where: {
                         category:category.toUpperCase()
                   },select:safeMerchant
+            } )
+
+            const stores= store.map( item =>
+            {
+                  const {password, refresh_token, ...rest} = item
+                  return rest;
             } )
             
             await req.redisClient.set( cacheKey, JSON.stringify( stores ), { EX: 3600 } );

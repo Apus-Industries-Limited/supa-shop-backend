@@ -83,6 +83,7 @@ const refresh = async ( req, res ) =>
                   foundUser.refresh_token = [ ...token, refreshToken ]
                   
                   await prisma.user.update( { where: { email: foundUser.email }, data: foundUser } )
+
                   
                   res.cookie( 'refreshToken', refreshToken, {
                   httpOnly: true,
@@ -91,6 +92,8 @@ const refresh = async ( req, res ) =>
                   secure: true
                   } )
                   const user = { ...foundUser, accessToken };
+                  delete user.password;
+                  delete user.refresh_token
                   return res.status(200).json(user)
             })
 
@@ -193,6 +196,8 @@ const merchantRefresh = async ( req, res ) =>
                   secure: true
                   } )
                   const user = { ...foundUser, accessToken };
+                  delete user.password;
+                  delete user.refresh_token
                   return res.status(200).json(user)
             })
 

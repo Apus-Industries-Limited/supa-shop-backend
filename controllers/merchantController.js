@@ -352,6 +352,8 @@ const loginMerchant = async (req, res) => {
     });
 
     const user = { ...foundUser, accessToken };
+    delete user.password;
+    delete user.refresh_token;
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,

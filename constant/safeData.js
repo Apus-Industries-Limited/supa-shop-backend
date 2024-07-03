@@ -7,8 +7,9 @@ const safeUser = {
       address: true,
       dp: true,
       isVerified: true,
-      isPromoted: true,
-      createdAt:true
+      createdAt: true,
+      password: true,
+      refresh_token:true
 };
 
 const safeMerchant = {
@@ -24,7 +25,9 @@ const safeMerchant = {
       isVerified: true,
       isPromoted: true,
       createdAt: true,
-      category:true
+      category: true,
+      password: true,
+      refresh_token:true
 };
 
 module.exports = {safeMerchant,safeUser}
