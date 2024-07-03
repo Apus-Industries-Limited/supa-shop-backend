@@ -614,8 +614,32 @@ const resetPassword = async (req, res) => {
   }
 };
 
+const uploadDp = async (req,res) =>
+{
+  try {
+    const {dp} = req.files;
+    const { id } = req.params;
+    if ( !id ) res.status( 400 ).json( { message: "User Id is required" } );
+    const user = await prisma.user.findUniqueOrThrow( {
+      where:{id}, select:safeUser
+    } )
+    
+    user.dp = dp[ 0 ].originalname
+    await prisma.user.update( { data: user, where: { id } } );
+    return res.status(202).json({message:"Profile Updated",profile:dp[ 0 ].originalname})
+  } catch (e) {
+    
+  }
+}
+
+
+const editProfile = async ( req, res ) =>
+{
+  
+}
+
 const cleanUp = async () =>
 {
   await prisma.$disconnect();
 }
-module.exports = { createUser, loginUser, forgotPassword, resetPassword,cleanUp };
+module.exports = { createUser, loginUser, forgotPassword, resetPassword,cleanUp,uploadDp,editProfile };

@@ -753,7 +753,8 @@ const uploadPicture = async (req, res) => {
 
     product.images = [...product.images, images.originalname];
 
-    await prisma.product.update({ data: product, where: { id } });
+    await prisma.product.update( { data: product, where: { id } } );
+    return res.status(202).json({message:"Image Updated"})
   } catch (error) {
     res
       .status(500)
