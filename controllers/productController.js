@@ -1076,7 +1076,7 @@ const getProductById = async ( req, res ) =>
 
 /**
  * @swagger
- * /product/categories:
+ * /product/category:
  *   get:
  *     summary: List all categories
  *     tags: [Product]
@@ -1156,7 +1156,7 @@ const cacheKey = "categories"
 
 /**
  * @swagger
- * /product/category:
+ * /product/category/product:
  *   get:
  *     tags: [Product]
  *     summary: Retrieve products by category

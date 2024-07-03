@@ -3,6 +3,7 @@ const argon = require("argon2");
 const randomString = require("crypto-random-string");
 const jwt = require("jsonwebtoken");
 const { sendMail } = require("../utils/mail");
+const { safeMerchant } = require( "../constant/safeData" );
 
 const prisma = new PrismaClient();
 
@@ -186,7 +187,7 @@ const createMerchant = async ( req, res ) =>
     const subject = "Verify your account SupaShop!";
     const from = `Supashop Support<${process.env.EMAIL}>`;
 
-    const user = await prisma.merchant.create({
+    await prisma.merchant.create({
       data: {
         name,
         email,
@@ -198,13 +199,10 @@ const createMerchant = async ( req, res ) =>
         city,
         country,
         dp: dp[0].originalname,
-      },
+      }
     });
-    delete user.password;
-    delete user.verification_code;
-    delete user.refresh_token;
     await sendMail(from, email, subject, html);
-    res.status(201).json({ message: "Account created", user });
+    res.status(201).json({ message: "Account created" });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
       if (e.code === "P2002")
@@ -314,7 +312,7 @@ const loginMerchant = async (req, res) => {
     if (!email || !password)
       return res.status(400).json({ message: "All field is required" });
     const foundUser = await prisma.merchant.findUniqueOrThrow({
-      where: { email },
+      where: { email },select:safeMerchant
     });
 
     const validatePassword = await argon.verify(foundUser.password, password);
@@ -354,10 +352,6 @@ const loginMerchant = async (req, res) => {
     });
 
     const user = { ...foundUser, accessToken };
-
-    delete user.password;
-    delete user.refresh_token;
-    delete user.verification_code;
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,

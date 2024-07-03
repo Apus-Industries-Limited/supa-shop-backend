@@ -72,12 +72,14 @@ app.use( redisMiddleware );
   app.use( "/logout", logout.router );
   app.use("/verify-mail", verify.router);
   app.use( "/product", product.router );
-  app.use("/merchant/auth",storecp,merchantAuth.router);
+app.use( "/merchant/auth", storecp, merchantAuth.router );
+  app.use("/store", require("./routes/store"))
 
 
   // Routes which requires authorization
   app.use( verifyJwt );
-  app.use("/cart", cart.router);
+app.use( "/cart", cart.router );
+  app.use('/wishlist', require("./routes/wishlist"))
 
   app.use(verifyMerchant)
   app.use('/merchant/product',cp, merchant.router)

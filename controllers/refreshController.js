@@ -1,5 +1,6 @@
 const { PrismaClient,Prisma } = require( '@prisma/client' );
-const jwt = require("jsonwebtoken")
+const jwt = require("jsonwebtoken");
+const { safeUser, safeMerchant } = require( '../constant/safeData' );
 
 
 const prisma = new PrismaClient();
@@ -53,10 +54,8 @@ const refresh = async ( req, res ) =>
                         refresh_token: {
                               has:oldRefresh
                         }
-                  }
+                  },select:safeUser
             })
-
-            console.log(foundUser)
             
 
             jwt.verify( oldRefresh, process.env.REFRESH_TOKEN_SECRET, async ( err, decoded ) =>
@@ -92,11 +91,6 @@ const refresh = async ( req, res ) =>
                   secure: true
                   } )
                   const user = { ...foundUser, accessToken };
-
-                        delete user.password;
-                        delete user.refresh_token;
-                        delete user.verification_code;
-                  
                   return res.status(200).json(user)
             })
 
@@ -161,7 +155,7 @@ const merchantRefresh = async ( req, res ) =>
                         refresh_token: {
                         has: oldRefresh
                   }
-                  }
+                  },select:safeMerchant
             } )
             
             if ( !foundUser ) return res.sendStatus( 403 );
@@ -199,10 +193,6 @@ const merchantRefresh = async ( req, res ) =>
                   secure: true
                   } )
                   const user = { ...foundUser, accessToken };
-
-                        delete user.password;
-                        delete user.refresh_token;
-                        delete user.verification_code;
                   return res.status(200).json(user)
             })
 

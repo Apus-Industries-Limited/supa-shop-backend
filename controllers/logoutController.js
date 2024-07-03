@@ -63,6 +63,7 @@ const logout = async ( req, res ) =>
                   sameSite:"None",
                   secure: true
             } )
+            console.log(foundUser)
             return res.send( 202 ).json({message:"User Logged out successful"});
       } catch (e) {
             return res.status(500).json({message:"internal server error", error:e})

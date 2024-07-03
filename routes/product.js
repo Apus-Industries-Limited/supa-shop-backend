@@ -11,8 +11,8 @@ const {
 const router = Router();
 
 router.get("/", listProducts);
-router.get("/categories", listcategory);
-router.get("/category", getProductByCategory);
+router.get("/category", listcategory);
+router.get("/category/product", getProductByCategory);
 router.get("/search", searchFilter);
 router.get("/:id", getProductById);
 
