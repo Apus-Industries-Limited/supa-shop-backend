@@ -4,6 +4,7 @@ const randomString = require("crypto-random-string");
 const jwt = require("jsonwebtoken");
 const { sendMail } = require("../utils/mail");
 const { safeUser } = require( "../constant/safeData" );
+const fs = require( "fs" ).promises;
 
 const prisma = new PrismaClient();
 
@@ -617,25 +618,64 @@ const resetPassword = async (req, res) => {
 const uploadDp = async (req,res) =>
 {
   try {
-    const {dp} = req.files;
+    const {dp} = req.file;
     const { id } = req.params;
     if ( !id ) res.status( 400 ).json( { message: "User Id is required" } );
     const user = await prisma.user.findUniqueOrThrow( {
       where:{id}, select:safeUser
     } )
-    
-    user.dp = dp[ 0 ].originalname
+    if ( user.dp ) {
+      await fs.unlink(`/public/user/${user.dp}`)
+    }
+    user.dp = dp.originalname
     await prisma.user.update( { data: user, where: { id } } );
-    return res.status(202).json({message:"Profile Updated",profile:dp[ 0 ].originalname})
-  } catch (e) {
-    
+    return res.status(202).json({message:"Profile Updated",profile:dp.originalname})
+  } catch ( e ) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError) {
+      if (e.code === "P2025")
+        return res.status(404).json({ message: "User does not exist" });
+    }
+    if (error.code === "ENOENT")
+      return res.status(404).json({ message: "Images were not found" });
+    return res
+      .status(500)
+      .json({ message: "internal server error", error: e.message });
   }
 }
 
 
 const editProfile = async ( req, res ) =>
 {
-  
+  try {
+    const { name, phone_number, username,address } = req.body;
+    const { id } = req.params;
+    if ( !id ) res.status( 400 ).json( { message: "User Id is required" } );
+
+    const foundUser = await prisma.user.findUniqueOrThrow( { where: { id } } );
+
+    foundUser.name = name ? name : foundUser.name;
+    foundUser.phone_number = phone_number ? phone_number : foundUser.phone_number;
+    foundUser.username = username ? username : foundUser.username;
+    foundUser.address = address ? [ address, ...foundUser.address ] : foundUser.address;
+    
+    const updated = await prisma.user.update( {
+      where: { id },
+      data: foundUser,
+      select:safeUser
+    } )
+    delete updated.password;
+    delete updated.refresh_token;
+    return res.status( 200 ).json( { message: "Profile Updated", user: updated } );
+
+  } catch ( e ) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError) {
+      if (e.code === "P2025")
+        return res.status(404).json({ message: "Merchant not found" });
+    }
+    return res
+      .status(500)
+      .json({ message: "internal server error", error: e.message });
+  }
 }
 
 const cleanUp = async () =>

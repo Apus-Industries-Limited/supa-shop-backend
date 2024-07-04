@@ -40,6 +40,13 @@ const storage = multer.diskStorage( {
     }
 } )
 
+const userStorage = multer.diskStorage( {
+    destination: './public/user',
+    filename: ( req,file, cb )=>{
+      cb( null, file.originalname );
+    }
+} )
+
 const storeStorage = multer.diskStorage( {
   destination: './public/store',
   filename: ( req, file, cb ) =>
@@ -49,10 +56,14 @@ const storeStorage = multer.diskStorage( {
 } )
 
 const storeUpload = multer( { storeStorage } )
-const storecp = storeUpload.fields( [ { name: "dp", maxCount: 1 } ] )
+const storecp = storeUpload.fields(  { name: "dp", maxCount: 1 } )
 
 const upload = multer({storage})
-const cp = upload.fields([{name:'dp',maxCount:1}, {name:'images',maxCount:3}])
+const cp = upload.fields( [ { name: 'dp', maxCount: 1 }, { name: 'images', maxCount: 3 } ] )
+
+const userUpload = multer({storage})
+const userCp = userUpload.fields( { name: 'dp', maxCount: 1 } )
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use( cookieParser() );
@@ -86,11 +97,12 @@ app.use( "/merchant/auth", storecp, merchantAuth.router );
 app.use( verifyJwt );
 app.use( "/cart", cart.router );
 app.use('/wishlist', require("./routes/wishlist"))
-app.use('/profile',require("./routes/profile"))
+app.use('/profile',userCp,require("./routes/profile"))
 
 //This route handles the logic for merchants
 app.use(verifyMerchant)
-app.use('/merchant/product',cp, merchant.router)
+app.use( '/merchant/product', cp, merchant.router )
+app.use('/merchant/profile', storecp, require("./routes/merchantProfile"))
 
 
 

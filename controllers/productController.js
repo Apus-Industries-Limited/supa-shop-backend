@@ -144,7 +144,7 @@ const createProduct = async (req, res) => {
         price: parseFloat(price),
         dp: dp[0].originalname,
         images: images.map((image) => image.originalname),
-        category,
+        category:category.toUpperCase(),
         merchantId: res.merchant.id,
       },
     });
@@ -341,9 +341,9 @@ const deleteProduct = async (req, res) => {
       },
     });
 
-    await fs.unlink(`/public/product${product.dp}`);
+    await fs.unlink(`/public/product/${product.dp}`);
     product.images.forEach(
-      async (img) => await fs.unlink(`/public/product${img}`)
+      async (img) => await fs.unlink(`/public/product/${img}`)
     );
 
     res.status(200).send(json({ message: "Product deleted successfully" }));
@@ -632,7 +632,7 @@ const deletePicture = async ( req, res ) =>
       data: product,
     });
 
-    await fs.unlink(`/public/product${image}`);
+    await fs.unlink(`/public/product/${image}`);
     res
       .status(200)
       .send(
@@ -740,7 +740,7 @@ const deletePicture = async ( req, res ) =>
 const uploadPicture = async (req, res) => {
   try {
     const { id } = req.body;
-    const { images } = req.file;
+    const { images } = req.files;
     if (!id) return res.status(400).json({ message: "Product Id is required" });
 
     const product = await prisma.product.findFirstOrThrow({
@@ -869,7 +869,7 @@ const uploadPicture = async (req, res) => {
 const uploadDp = async (req, res) => {
   try {
     const { id } = req.params;
-    const { dp } = req.file;
+    const { dp } = req.files;
     if (!id || !dp)
       return res.status(400).json({ message: "Product or file is missing" });
 
@@ -877,9 +877,9 @@ const uploadDp = async (req, res) => {
       where: { id, merchantId: res.merchant.id },
     });
 
-    await fs.unlink(`/public/product${product.dp}`);
+    await fs.unlink(`/public/product/${product.dp}`);
 
-    product.dp = dp.originalname;
+    product.dp = dp[0].originalname;
 
     const updated = await prisma.product.update({
       data: product,
@@ -961,14 +961,19 @@ const uploadDp = async (req, res) => {
 
 const listProducts = async ( req, res ) =>
 {
+  const PAGE_NUMBER = 10
   const skip = +req.query.skip || 0;
   const cacheKey = `products:skip:${ skip }`;
   try {
     const cacheData = await req.redisClient.get( cacheKey );
-    if ( cacheData) return res.status(200).json( JSON.parse( cacheData ));
+    if ( cacheData ) return res.status( 200 ).json( JSON.parse( cacheData ) );
+    const count = await prisma.product.count()
+    const randomOffset = Math.floor(Math.random()*count)
+
+    const adjustedOffset = Math.max(0,randomOffset - PAGE_NUMBER)
     const products = await prisma.product.findMany({
-      skip,
-      take: 10,
+      skip:adjustedOffset,
+      take: PAGE_NUMBER,
     } );
     
     await req.redisClient.set( cacheKey, JSON.stringify( products ),{EX:3600});
@@ -1214,21 +1219,29 @@ const cacheKey = "categories"
 
 const getProductByCategory = async ( req, res ) =>
 {
+  const PAGE_NUMBER = 10
   const skip = +req.query.skip || 0;
   const category = req.query.category;
   const cacheKey = `products:category:${category}:skip:${ skip }`;
   try {
     const cacheData = await req.redisClient.get( cacheKey );
     if ( cacheData ) return res.status( 200 ).json( JSON.parse( cacheData ) );
-    
-    if (!category) return res.status(400).send("No category provided");
+    if ( !category ) return res.status( 400 ).send( "No category provided" );
+    const count = await prisma.product.count( {
+      where: {
+        category: category.toUpperCase()
+      }
+    })
+    const randomOffset = Math.floor( Math.random() * count );
+
+    const adjustedOffset = Math.max( 0, randomOffset - PAGE_NUMBER );
 
     const products = await prisma.product.findMany({
       where: {
         category: category.toUpperCase(),
       },
-      skip,
-      take: 10,
+      skip:adjustedOffset,
+      take: PAGE_NUMBER,
     } );
     
     await req.redisClient.set( cacheKey, JSON.stringify( products ), { EX: 3600 } );
@@ -1335,6 +1348,11 @@ const searchFilter = async ( req, res ) =>
       mode: "insensitive",
     };
 
+    whereClause.description = {
+      contains: search,
+      mode: "insensitive",
+    }
+
     if (minPrice && !isNaN(minPrice)) {
       whereClause.price = {
         gte: parseFloat(minPrice),
@@ -1347,9 +1365,15 @@ const searchFilter = async ( req, res ) =>
         lte: parseFloat(maxPrice),
       };
     }
+    const count = await prisma.product.count( { where: whereClause } );
+
+    const randomOffset = Math.floor( Math.random() * count );
+
+    const adjustedOffset = Math.max( 0, randomOffset - PAGE_NUMBER );
+
     const products = await prisma.product.findMany({
       where: whereClause,
-      skip: +skip || 0,
+      skip: adjustedOffset,
       take: 10,
     });
     return res.status(202).send(json(products));
