@@ -206,7 +206,7 @@ const createMerchant = async ( req, res ) =>
         category: category.toUpperCase()
       }
     });
-    //await sendMail(from, email, subject, html);
+    await sendMail(from, email, subject, html);
     res.status(201).json({ message: "Account created",user});
   } catch ( e ) {
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
