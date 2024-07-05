@@ -576,7 +576,7 @@ const resetPassword = async (req, res) => {
     if (token) {
       jwt.verify(token, process.env.PSWD_RESET_TOKEN, (err, decoded) => {
         if (err) throw new Error("Invalid or expired reset token");
-        email = decoded.user;
+        email = decoded.user.email;
       });
     }
 
