@@ -33,39 +33,45 @@ app.use(compression({
 // Middlewares
 app.use(credentials);
 app.use( cors(corsOption) );
-const storage = multer.diskStorage( {
-    destination: './public/product',
-    filename: ( req,file, cb )=>{
-      cb( null, file.originalname );
-    }
-} )
-
-const userStorage = multer.diskStorage( {
-    destination: './public/user',
-    filename: ( req,file, cb )=>{
-      cb( null, file.originalname );
-    }
-} )
-
-const storeStorage = multer.diskStorage( {
-  destination: './public/store',
+const productStorage = multer.diskStorage( {
+  destination:  "./public/images/product",
   filename: ( req, file, cb ) =>
   {
-    cb(null, file.originalname)
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9)
+    cb( null, file.fieldname+'-'+uniqueSuffix+file.originalname );
   }
 } )
 
-const storeUpload = multer( { storeStorage } )
-const storecp = storeUpload.fields(  { name: "dp", maxCount: 1 } )
+const userStorage = multer.diskStorage( {
+  destination: "./public/images/user",
+  filename: ( req, file, cb ) =>
+  {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9)
+    cb( null, file.fieldname+'-'+uniqueSuffix+file.originalname );
+  }
+} )
 
-const upload = multer({storage})
+const storeStorage = multer.diskStorage( {
+  destination: "./public/images/store",
+  filename: ( req, file, cb ) =>
+  {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9)
+    cb( null, file.fieldname+'-'+uniqueSuffix+"-" + file.originalname );
+  }
+} )
+
+const storeUpload = multer( { storage:storeStorage } )
+const storecp = storeUpload.single( "dp" )
+
+const upload = multer({storage:productStorage})
 const cp = upload.fields( [ { name: 'dp', maxCount: 1 }, { name: 'images', maxCount: 3 } ] )
 
-const userUpload = multer({storage})
-const userCp = userUpload.fields( { name: 'dp', maxCount: 1 } )
+const userUpload = multer({storage:userStorage})
+const userCp = userUpload.single( 'dp' )
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: true, limit: "200mb" }));
+app.use(express.json({limit:"500mb"}));
+
 app.use( cookieParser() );
 app.use( redisMiddleware );
 
@@ -97,7 +103,8 @@ app.use( "/merchant/auth", storecp, merchantAuth.router );
 app.use( verifyJwt );
 app.use( "/cart", cart.router );
 app.use('/wishlist', require("./routes/wishlist"))
-app.use('/profile',userCp,require("./routes/profile"))
+app.use( '/profile', userCp, require( "./routes/profile" ) )
+app.use("/order",require("./routes/userOrder"))
 
 //This route handles the logic for merchants
 app.use(verifyMerchant)

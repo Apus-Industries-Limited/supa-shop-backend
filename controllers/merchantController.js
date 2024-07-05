@@ -108,8 +108,10 @@ const prisma = new PrismaClient();
 const createMerchant = async ( req, res ) =>
 {
   const { name, email, phone_number, username, password, address, city, country,category } = req.body;
-  const { dp } = req.file;
+  const dp = req.file;
+  console.log(dp)
   try {
+    
     if (
       !name ||
       !email ||
@@ -119,8 +121,8 @@ const createMerchant = async ( req, res ) =>
       !address ||
       !city ||
       !country ||
-      !dp ||
-      !category
+      !category ||
+      !dp
     )
       return res.status(400).json({ message: "All field is required" });
 
@@ -189,7 +191,7 @@ const createMerchant = async ( req, res ) =>
     const subject = "Verify your account SupaShop!";
     const from = `Supashop Support<${process.env.EMAIL}>`;
 
-    await prisma.merchant.create({
+    const user= await prisma.merchant.create({
       data: {
         name,
         email,
@@ -200,18 +202,22 @@ const createMerchant = async ( req, res ) =>
         address,
         city,
         country,
-        dp: dp.originalname,
+        dp: dp.filename,
         category: category.toUpperCase()
       }
     });
-    await sendMail(from, email, subject, html);
-    res.status(201).json({ message: "Account created" });
-  } catch (e) {
+    //await sendMail(from, email, subject, html);
+    res.status(201).json({ message: "Account created",user});
+  } catch ( e ) {
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
-      if (e.code === "P2002")
-        return res.status(409).json({ message: "Email already exist" });
-    }
-    return res.status(500).json({ message: "internal server error", error: e });
+      if ( e.code === "P2002" ) {
+        res.status( 409 ).json( { message: "Email or username already exist" } );
+        await fs.unlink( `./public/images/store/${ req.file.filename }` );
+        return
+}    }
+    res.status( 500 ).json( { message: "internal server error", error: e.message } );
+    await fs.unlink( `/public/images/store/${ dp.filename }` );
+    return
   } finally {
     setTimeout(async () => {
       await prisma.user.update({
@@ -710,7 +716,7 @@ const editDp = async ( req, res ) =>
     const foundUser = await prisma.merchant.findUniqueOrThrow( {
       where: { id }
     } )
-    await fs.unlink( `/public/store/${ foundUser.dp }` )
+    await fs.unlink( `/public/images/store/${ foundUser.dp }` )
     foundUser.dp = dp.originalname;
     const updated = await prisma.merchant.update( {
       where: { id },

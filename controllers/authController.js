@@ -618,18 +618,18 @@ const resetPassword = async (req, res) => {
 const uploadDp = async (req,res) =>
 {
   try {
-    const {dp} = req.file;
+    const dp = req.file;
     const { id } = req.params;
     if ( !id ) res.status( 400 ).json( { message: "User Id is required" } );
     const user = await prisma.user.findUniqueOrThrow( {
       where:{id}, select:safeUser
     } )
     if ( user.dp ) {
-      await fs.unlink(`/public/user/${user.dp}`)
+      await fs.unlink(`/public/images/user/${user.dp}`)
     }
-    user.dp = dp.originalname
+    user.dp = dp.filename
     await prisma.user.update( { data: user, where: { id } } );
-    return res.status(202).json({message:"Profile Updated",profile:dp.originalname})
+    return res.status(202).json({message:"Profile Updated",profile:dp.filename})
   } catch ( e ) {
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
       if (e.code === "P2025")

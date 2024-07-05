@@ -142,8 +142,8 @@ const createProduct = async (req, res) => {
         quantity: parseInt(quantity),
         description,
         price: parseFloat(price),
-        dp: dp[0].originalname,
-        images: images.map((image) => image.originalname),
+        dp: dp[0].filename,
+        images: images.map((image) => image.filename),
         category:category.toUpperCase(),
         merchantId: res.merchant.id,
       },
@@ -341,9 +341,9 @@ const deleteProduct = async (req, res) => {
       },
     });
 
-    await fs.unlink(`/public/product/${product.dp}`);
+    await fs.unlink(`/public/images/product/${product.dp}`);
     product.images.forEach(
-      async (img) => await fs.unlink(`/public/product/${img}`)
+      async (img) => await fs.unlink(`/public/images/product/${img}`)
     );
 
     res.status(200).send(json({ message: "Product deleted successfully" }));
@@ -632,7 +632,7 @@ const deletePicture = async ( req, res ) =>
       data: product,
     });
 
-    await fs.unlink(`/public/product/${image}`);
+    await fs.unlink(`/public/images/product/${image}`);
     res
       .status(200)
       .send(
@@ -737,28 +737,40 @@ const deletePicture = async ( req, res ) =>
  *                   example: Internal server error
  */
 
-const uploadPicture = async (req, res) => {
-  try {
-    const { id } = req.body;
+const uploadPicture = async ( req, res ) =>
+{
+  const { id } = req.body;
     const { images } = req.files;
+  try {
     if (!id) return res.status(400).json({ message: "Product Id is required" });
 
     const product = await prisma.product.findFirstOrThrow({
       where: { id, merchantId: res.merchant.id },
     });
-    if (product.images.length > 5)
+    if (product.images.length > 5 || product.images.length + images.length > 5)
       return res
         .status(405)
-        .json({ message: "Maximun images allowed is five" });
+        .json( { message: "Maximun images allowed is five" } );
+    
+    const newset = images.map( img =>
+    {
+      const { filename } = img
+      return filename
+    })
 
-    product.images = [...product.images, images.originalname];
+    product.images = [...product.images, ...newset];
 
     await prisma.product.update( { data: product, where: { id } } );
     return res.status(202).json({message:"Image Updated"})
   } catch (error) {
     res
       .status(500)
-      .json({ message: "Internal server error", error: error.message });
+      .json( { message: "Internal server error", error: error.message } );
+    images.map(async item =>
+    {
+      await fs.unlink( `./public/images/product/${ item.filename }` );
+    })
+        return
   }
 };
 
@@ -877,14 +889,16 @@ const uploadDp = async (req, res) => {
       where: { id, merchantId: res.merchant.id },
     });
 
-    await fs.unlink(`/public/product/${product.dp}`);
+    
 
-    product.dp = dp[0].originalname;
+    product.dp = dp[0].filename;
 
     const updated = await prisma.product.update({
       data: product,
       where: { id, merchantId: res.merchant.id },
-    });
+    } );
+    
+    await fs.unlink( `/public/images/product/${ product.dp }` );
 
     return res
       .status(202)
@@ -895,9 +909,13 @@ const uploadDp = async (req, res) => {
     console.error( error )
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
       if (e.code === "P2025")
-        return res.status(404).json({ message: "Product not found" });
+        res.status( 404 ).json( { message: "Product not found" } );
+      await fs.unlink( `./public/images/product/${ dp[0].filename }` );
+        return
     }
     res.status( 500 ).json( { message: "Internal server error" } );
+    await fs.unlink( `./public/images/product/${ dp[0].filename }` );
+        return
   }
 };
 
