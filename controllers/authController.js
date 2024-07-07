@@ -617,29 +617,37 @@ const resetPassword = async (req, res) => {
 
 const uploadDp = async (req,res) =>
 {
+  const dp = req.file;
+  const { id } = req.params;
   try {
-    const dp = req.file;
-    const { id } = req.params;
     if ( !id ) res.status( 400 ).json( { message: "User Id is required" } );
     const user = await prisma.user.findUniqueOrThrow( {
       where:{id}, select:safeUser
     } )
     if ( user.dp ) {
-      await fs.unlink(`/public/images/user/${user.dp}`)
+      await fs.unlink(`./public/images/user/${user.dp}`)
     }
     user.dp = dp.filename
     await prisma.user.update( { data: user, where: { id } } );
     return res.status(202).json({message:"Profile Updated",profile:dp.filename})
   } catch ( e ) {
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
-      if (e.code === "P2025")
-        return res.status(404).json({ message: "User does not exist" });
+      if (e.code === "P2025"){
+        res.status( 404 ).json( { message: "User does not exist" } );
+        await fs.unlink( `./public/images/user/${ dp.filename }` );
+        return;
+      }
     }
-    if (error.code === "ENOENT")
-      return res.status(404).json({ message: "Images were not found" });
-    return res
+    if (e.code === "ENOENT"){
+      res.status( 404 ).json( { message: "Images were not found" } );
+      await fs.unlink( `./public/images/user/${ dp.filename }` );
+      return;
+    }
+    res
       .status(500)
-      .json({ message: "internal server error", error: e.message });
+      .json( { message: "internal server error", error: e.message } );
+    await fs.unlink( `./public/images/user/${ dp.filename }` );
+    return;
   }
 }
 
