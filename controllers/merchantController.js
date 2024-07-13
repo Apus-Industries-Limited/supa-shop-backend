@@ -669,75 +669,6 @@ const resetMerchantPassword = async (req, res) => {
   }
 };
 
-const editProfile = async ( req, res ) =>
-{
-  try {
-    const { name, phone_number, username,address,city,country,category } = req.body;
-    const { id } = req.params;
-    if ( !id ) res.status( 400 ).json( { message: "User Id is required" } );
-
-    const foundUser = await prisma.merchant.findUniqueOrThrow( { where: { id } } );
-
-    foundUser.name = name ? name : foundUser.name;
-    foundUser.phone_number = phone_number ? phone_number : foundUser.phone_number;
-    foundUser.username = username ? username : foundUser.username;
-    foundUser.address = address ? address : foundUser.address;
-    foundUser.city = city ? city : foundUser.city;
-    foundUser.country = country ? country : foundUser.country;
-    foundUser.category = category ? category.toUpperCase() : foundUser.category;
-    
-    const updated = await prisma.merchant.update( {
-      where: { id },
-      data: foundUser,
-      select:safeMerchant
-    } )
-    delete updated.password;
-    delete updated.refresh_token;
-    return res.status( 200 ).json( { message: "Profile Updated", user: updated } );
-
-  } catch ( e ) {
-    if (e instanceof Prisma.PrismaClientKnownRequestError) {
-      if (e.code === "P2025")
-        return res.status(404).json({ message: "User not found" });
-    }
-    return res
-      .status(500)
-      .json({ message: "internal server error", error: e.message });
-  }
-}
-
-const editDp = async ( req, res ) =>
-{
-  try {
-    const { dp } = req.file;
-    if ( !dp ) return res.status( 400 ).json( { message: "Image file required" } );
-    const { id } = req.params;
-    if ( !id ) return res.status( 400 ).json( { message: "User Id is required" } );
-    const foundUser = await prisma.merchant.findUniqueOrThrow( {
-      where: { id }
-    } )
-    await fs.unlink( `/public/images/store/${ foundUser.dp }` )
-    foundUser.dp = dp.originalname;
-    const updated = await prisma.merchant.update( {
-      where: { id },
-      data: foundUser,
-      select: safeMerchant
-    } )
-    delete updated.password;
-    delete updated.refresh_token;
-    return res.status( 200 ).json( { message: "Profile Updated", user: updated } );
-  } catch (error) {
-    if (e instanceof Prisma.PrismaClientKnownRequestError) {
-      if (e.code === "P2025")
-        return res.status(404).json({ message: "User does not exist" });
-    }
-    if (error.code === "ENOENT")
-      return res.status(404).json({ message: "Images were not found" });
-    return res
-      .status(500)
-      .json({ message: "internal server error", error: e.message });
-  }
-}
 
 
 const cleanUp = async () =>
@@ -750,7 +681,5 @@ module.exports = {
   loginMerchant,
   forgotMerchantPassword,
   resetMerchantPassword,
-  cleanUp,
-  editProfile,
-  editDp
+  cleanUp
 };

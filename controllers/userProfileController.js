@@ -9,9 +9,10 @@ const uploadDp = async (req,res) =>
 {
   const dp = req.file;
   const { id } = res.user;
+  let user;
   try {
     if ( !id )return res.status( 400 ).json( { message: "User Id is required" } );
-    const user = await prisma.user.findUniqueOrThrow( {
+    user = await prisma.user.findUniqueOrThrow( {
       where:{id}, select:safeUser
     } )
     if ( user.dp ) {
@@ -29,9 +30,9 @@ const uploadDp = async (req,res) =>
       }
     }
     if (e.code === "ENOENT"){
-      res.status( 404 ).json( { message: "Images were not found" } );
-      await fs.unlink( `./public/images/user/${ dp.filename }` );
-      return;
+      user.dp = dp.filename;
+      await prisma.user.update( { data: user, where: { id } } );
+      return res.status(202).json({message:"Profile Updated",profile:dp.filename})
     }
     res
       .status(500)
@@ -49,6 +50,8 @@ const deleteDp = async ( req, res ) =>
       where:{id}, select:safeUser
     } )
     await fs.unlink( `./public/images/user/${ user.dp }` );
+    user.dp = null;
+    await prisma.user.update( { where: { id }, data: user } );
 
     return res.status(200).json({message:"Profile image deleted successfully"})
   } catch (e) {
@@ -111,13 +114,19 @@ const deleteAccount = async (req,res) =>
   try {
     if ( !id ) return res.status( 400 ).json( { message: "User Id is required" } );
     const user = await prisma.user.findUniqueOrThrow( { where: { id } } );
-    await fs.unlink( `./public/images/user/${ user.dp }` );
     await prisma.user.delete( { where: { id } } );
+    await fs.unlink( `./public/images/user/${ user.dp }` );
     return res.status(202).json({message:"Account Deleted"})
-  } catch (e) {
-    if (e instanceof Prisma.PrismaClientKnownRequestError) {
+  } catch ( e ) {
+    
+    if ( e instanceof Prisma.PrismaClientKnownRequestError ) {
+      
       if (e.code === "P2025")
         return res.status(404).json({ message: "User not found" });
+    }
+    if (e.code === "ENOENT"){
+      res.status( 202 ).json( { message: "Account Deleted" } );
+      return;
     }
     return res
       .status(500)

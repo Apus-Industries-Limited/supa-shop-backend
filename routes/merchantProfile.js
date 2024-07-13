@@ -1,10 +1,14 @@
 const express = require( "express" );
-const { editDp, editProfile } = require( "../controllers/merchantController" );
+const { deleteMerchant, updateMerchantPassword, editMerchantProfile, uploadMerchantDp } = require( "../controllers/merchantProfile" );
 const router = express.Router();
 
 
-router.route( '/:id' )
-      .post( editDp )
-      .put(editProfile)
+router.route( '/' )
+      .delete( deleteMerchant )
+      .put( updateMerchantPassword )
+      .patch( editMerchantProfile );
+      
+router.route( '/dp' )
+      .post( uploadMerchantDp );
 
 module.exports = router;
