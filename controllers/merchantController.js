@@ -220,7 +220,7 @@ const createMerchant = async ( req, res ) =>
     return
   } finally {
     setTimeout(async () => {
-      await prisma.user.update({
+      await prisma.merchant.update({
         where: { email },
         data: {
           verification_code: "",

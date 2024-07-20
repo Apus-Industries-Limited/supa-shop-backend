@@ -86,18 +86,28 @@ const editProfile = async ( req, res ) =>
     foundUser.name = name ? name : foundUser.name;
     foundUser.phone_number = phone_number ? phone_number : foundUser.phone_number;
     foundUser.username = username ? username : foundUser.username;
-    foundUser.address = address ? [ {address, id: foundUser.address.length ++}, ...foundUser.address ] : foundUser.address;
+    if ( address ) {
+      const prevAddress = foundUser.address;
+      if ( prevAddress ) {
+        const newAddressSet = [ ...prevAddress, { address, id: prevAddress.length + 1 } ]
+        foundUser.address = newAddressSet
+      } else {
+        foundUser.address = [{ address, id: 1 } ]
+      }
+    }
+
+    console.log(foundUser.address)
     
     const updated = await prisma.user.update( {
       where: { id },
-      data: foundUser,
-      select:safeUser
+      data: foundUser
     } )
     delete updated.password;
     delete updated.refresh_token;
     return res.status( 200 ).json( { message: "Profile Updated", user: updated } );
 
   } catch ( e ) {
+    console.log( e );
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
       if (e.code === "P2025")
         return res.status(404).json({ message: "User not found" });

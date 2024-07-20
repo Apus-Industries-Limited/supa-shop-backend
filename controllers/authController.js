@@ -170,7 +170,7 @@ const createUser = async (req, res) => {
       },
     } );
     
-    await sendMail(from, email, subject, html);
+    //await sendMail(from, email, subject, html);
     res.status(201).json({ message: "Account created" });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError) {

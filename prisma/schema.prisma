@@ -50,7 +50,7 @@ model User {
   verification_code  String?
   isVerified         Boolean  @default(false)
   refresh_token      String[]
-  address            String[]
+  address            Json?
   resetPasswordToken String?
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt

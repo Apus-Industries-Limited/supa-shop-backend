@@ -228,11 +228,10 @@ const verificationMail = async (req, res) => {
 const verifyCode = async (req, res) => {
   try {
     const { code, email } = req.body;
-    if (!email || !code)
-      return res.status(400).json({ message: "All field is required" });
+    console.log(req.body)
+    if (!email || !code)return res.status(400).json({ message: "All field is required" });
 
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) return res.status(404).json({ message: "User not found" });
+    const user = await prisma.user.findUniqueOrThrow({ where: { email } });
 
     if (user.verification_code !== code)
       return res.status(400).json({ message: "Invalid Verification code" });
