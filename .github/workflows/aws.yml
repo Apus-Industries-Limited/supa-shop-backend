@@ -1,0 +1,37 @@
+name: Deploy to AWS
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v1
+      with:
+        node-version: '22.5.1'
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Build project
+      run: npm run build
+
+    - name: Decrypt .pem file
+      run: |
+        openssl enc -d -aes-256-cbc -in SupaShop.pem.enc -out SupaShop.pem -pass pass:${{ secrets.SSH_KEY_PASSWORD }}
+        chmod 600 SupaShop.pem
+
+    - name: Deploy to server
+      env:
+        SSH_USER: ${{ secrets.SSH_USER }}
+        SERVER_IP: ${{ secrets.SERVER_IP }}
+      run: |
+        ssh -i SupaShop.pem $SSH_USER@$SERVER_IP "cd frontend && git pull && npm install && npm run build && pm2 restart all"
