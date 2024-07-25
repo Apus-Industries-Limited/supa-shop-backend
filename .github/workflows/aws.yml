@@ -34,4 +34,4 @@ jobs:
         SSH_USER: ${{ secrets.SSH_USER }}
         SERVER_IP: ${{ secrets.SERVER_IP }}
       run: |
-        ssh -i SupaShop.pem $SSH_USER@$SERVER_IP "cd frontend && git pull && npm install && npm run build && pm2 restart all"
+        ssh -i SupaShop.pem $SSH_USER@$SERVER_IP "cd frontend && git pull origin master && npm i && npm run build && pm2 restart all"
