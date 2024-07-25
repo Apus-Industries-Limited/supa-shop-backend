@@ -3,6 +3,7 @@ const { json } = require( "../utils/bigint-serializer" );
 const fs = require( "fs" ).promises;
 const prisma = new PrismaClient();
 const redis = require( "redis" );
+const { productSelect } = require( "../constant/safeData" );
 
 const redisClient = redis.createClient( {
   url: process.env.REDIS_URL
@@ -147,6 +148,7 @@ const createProduct = async (req, res) => {
         category:category.toUpperCase(),
         merchantId: res.merchant.id,
       },
+      select:productSelect
     });
 
     res.status(201).send(json(product));
@@ -260,6 +262,7 @@ const updateProduct = async (req, res) => {
         merchantId: res.merchant.id,
       },
       data: product,
+      select:productSelect
     });
 
     res.status(200).send(json(updatedProduct));
@@ -339,6 +342,7 @@ const deleteProduct = async (req, res) => {
         id: req.params.id,
         merchantId: res.merchant.id,
       },
+      select:productSelect
     });
 
     await fs.unlink(`/public/images/product/${product.dp}`);
@@ -442,9 +446,10 @@ const getMerchantProduct = async ( req, res ) =>
       where: { merchantId },
       skip,
       take: 10,
+      select:productSelect
     } );
 
-    await req.redisClient.set( cacheKey, JSON.stringify( product ), { EX: 3600 } )
+    await req.redisClient.set( cacheKey, json( product ), { EX: 3600 } )
     
     res.status(200).send(json(product));
   } catch (e) {
@@ -988,13 +993,14 @@ const listProducts = async ( req, res ) =>
     const count = await prisma.product.count()
     const randomOffset = Math.floor(Math.random()*count)
 
-    const adjustedOffset = Math.max(0,randomOffset - PAGE_NUMBER)
+    const adjustedOffset = Math.max( 0, randomOffset - PAGE_NUMBER )
     const products = await prisma.product.findMany({
       skip:adjustedOffset,
       take: PAGE_NUMBER,
+      select: productSelect
     } );
     
-    await req.redisClient.set( cacheKey, JSON.stringify( products ),{EX:3600});
+    await req.redisClient.set( cacheKey, json(products),{EX:3600});
 
     res.status(200).send(
       json( products)
@@ -1070,17 +1076,13 @@ const listProducts = async ( req, res ) =>
 const getProductById = async ( req, res ) =>
 {
   const { id } = req.params;
-    const cacheKey = `product:id${id}`
   try {
-    const cacheData = await req.redisClient.get( cacheKey );
-    if ( cacheData ) return res.status(200).json( JSON.parse( cacheData ) );
 
 
     const product = await prisma.product.findFirstOrThrow({
       where: { id },
+      select:productSelect
     } );
-    
-    await req.redisClient.set(cacheKey,JSON.stringify(product),{EX:3600})
 
     res.status(200).send(json(product));
   } catch (e) {
@@ -1260,9 +1262,10 @@ const getProductByCategory = async ( req, res ) =>
       },
       skip:adjustedOffset,
       take: PAGE_NUMBER,
+      select:productSelect
     } );
     
-    await req.redisClient.set( cacheKey, JSON.stringify( products ), { EX: 3600 } );
+    await req.redisClient.set( cacheKey, json( products ), { EX: 3600 } );
     
     return res.status(202).send(json(products));
   } catch (e) {
@@ -1356,7 +1359,7 @@ const searchFilter = async ( req, res ) =>
 {
 
   try {
-    const { search, skip, minPrice, maxPrice } = req.query;
+    const { search, minPrice, maxPrice } = req.query;
     let whereClause = {};
 
     if (!search)
@@ -1393,6 +1396,7 @@ const searchFilter = async ( req, res ) =>
       where: whereClause,
       skip: adjustedOffset,
       take: 10,
+      select:productSelect
     });
     return res.status(202).send(json(products));
   } catch (e) {

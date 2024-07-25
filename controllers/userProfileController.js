@@ -95,8 +95,6 @@ const editProfile = async ( req, res ) =>
         foundUser.address = [{ address, id: 1 } ]
       }
     }
-
-    console.log(foundUser.address)
     
     const updated = await prisma.user.update( {
       where: { id },
@@ -107,7 +105,6 @@ const editProfile = async ( req, res ) =>
     return res.status( 200 ).json( { message: "Profile Updated", user: updated } );
 
   } catch ( e ) {
-    console.log( e );
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
       if (e.code === "P2025")
         return res.status(404).json({ message: "User not found" });

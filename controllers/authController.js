@@ -586,7 +586,6 @@ const resetPassword = async (req, res) => {
         resetPasswordToken: token,
       },
     });
-    // console.log(user, "user");
 
     const hashedPassword = await argon.hash(password);
 

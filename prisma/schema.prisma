@@ -74,6 +74,8 @@ model Merchant {
   dp                 String
   refresh_token      String[]
   resetPasswordToken String?
+  reviews            Json?
+  ratings            Json?
   category           Category
   isVerified         Boolean   @default(false)
   isPromoted         Boolean   @default(false)
@@ -96,7 +98,8 @@ model Product {
   isInStock   Boolean   @default(true)
   color       String[]
   dimension   Json?
-  ratings     Decimal[]
+  ratings     Json?
+  reviews     Json?
   isFeatured Boolean @default(false)
 
   createdAt DateTime       @default(now())
@@ -108,11 +111,12 @@ model Product {
   @@map("products")
 }
 
+
 model CartItem {
   id        String   @id @default(uuid())
-  userId    String   @default(uuid())
+  userId    String
   user      User     @relation(fields: [userId], references: [id])
-  productId String   @default(uuid())
+  productId String
   product   Product  @relation(fields: [productId], references: [id])
   quantity  Int
   createdAt DateTime @default(now())

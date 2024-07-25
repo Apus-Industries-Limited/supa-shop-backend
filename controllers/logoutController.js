@@ -56,21 +56,14 @@ const logout = async ( req, res ) =>
             const token = foundUser.refresh_token.filter( refresh => refresh !== oldRefresh )
 
             foundUser.refresh_token = [ ...token ]
-
-            if ( foundUser.refresh_token !== token ) {
-                  console.log("not the same")
-            }
             
             const user = await prisma.user.update( { where: { email: foundUser.email }, data: foundUser } )
-
-            console.log(user)
 
             res.clearCookie( 'refreshToken', {
                   httpOnly: true,
                   sameSite:"None",
                   secure: true
             } )
-            console.log(res)
             return res.status( 202 ).json({message:"User Logged out successful"});
       } catch (e) {
             return res.status(500).json({message:"internal server error", error:e})

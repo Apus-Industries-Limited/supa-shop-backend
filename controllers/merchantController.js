@@ -109,7 +109,6 @@ const createMerchant = async ( req, res ) =>
 {
   const { name, email, phone_number, username, password, address, city, country,category } = req.body;
   const dp = req.file;
-  console.log(dp)
   try {
     
     if (
@@ -629,7 +628,6 @@ const resetMerchantPassword = async (req, res) => {
         resetPasswordToken: token,
       },
     });
-    // console.log(user, "user");
 
     if (!user)
       return res

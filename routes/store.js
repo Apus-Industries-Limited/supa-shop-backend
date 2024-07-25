@@ -4,8 +4,8 @@ const router = express.Router();
 
 router.get( "/", getStores );
 router.get( '/product', getStoreProduct );
-router.get( "/:id", getSingleStore );
 router.get( '/feature', getFeatureStores )
-router.get("/category",getStoreCategory)
+router.get( "/category", getStoreCategory );
+router.get( "/:id", getSingleStore );
 
 module.exports =router

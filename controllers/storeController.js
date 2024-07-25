@@ -1,6 +1,6 @@
 const { PrismaClient, Prisma } = require( "@prisma/client" );
-const { safeMerchant } = require( "../constant/safeData" );
-
+const { safeMerchant, productSelect } = require( "../constant/safeData" );
+const {json} = require("../utils/bigint-serializer")
 const prisma = new PrismaClient();
 
 const getStores = async (req,res) =>
@@ -44,13 +44,14 @@ const getStoreProduct = async ( req, res ) =>
                   where: {
                         merchantId:storeId
                   },
+                  select:productSelect,
                   skip,
                   take: 10,
             } );
 
-            await req.redisClient.set( cacheKey, JSON.stringify( products ),{EX:3600});
+            await req.redisClient.set( cacheKey, json( products ),{EX:3600});
 
-            return res.status( 200 ).json( products );
+            return res.status( 200 ).send( json(products) );
 
       } catch (e) {
             res.status(500).json({message:"Internal sever error", error: e.message})
@@ -61,18 +62,15 @@ const getStoreProduct = async ( req, res ) =>
 const getSingleStore = async (req,res) =>
 {
       try {
-            const storeId = req.params;
-            if ( !storeId ) return res.status( 400 ).json( { message: "StoreId is required" } );
-            const cacheKey = `store:${ storeId }`
+            const {id} = req.params;
+            if ( !id ) return res.status( 400 ).json( { message: "id is required" } );
+            const cacheKey = `store:${ id }`
             const cacheData = await req.redisClient.get( cacheKey );
             if ( cacheData ) return res.status( 200 ).json( JSON.parse( cacheData ) );
             
-            const store = await prisma.merchant.findUniqueOrThrow( {
-                  where: {
-                        id: storeId
-                  },
-                  select:safeMerchant
-            } );
+            const store = await prisma.merchant.findUniqueOrThrow( { where: { id }, select: safeMerchant } )
+            delete store.password;
+            delete store.refresh_token;
             
             await req.redisClient.set( cacheKey, JSON.stringify( store ), { EX: 3600 } );
             return res.status( 202 ).json( store );
@@ -80,9 +78,9 @@ const getSingleStore = async (req,res) =>
       } catch ( e ) {
             if (e instanceof Prisma.PrismaClientKnownRequestError) {
                   if (e.code === "P2025")
-                        return res.status(404).json({ message: "Product not found" });
+                        return res.status(404).json({ message: "Store not found" });
             }
-            res.status(500).json({message:"Internal sever error", error: e.message})
+            res.status(500).json({message:"Internal sever error", error: e})
       }
 }
 
@@ -99,8 +97,8 @@ const getFeatureStores = async ( req, res ) =>
                   }, select: safeMerchant
             } )
 
-            await req.redisClient.set( cacheKey, JSON.stringify( stores ), { EX: 3600 } );
-            return res.status( 200 ).json( stores );
+            await req.redisClient.set( cacheKey, JSON.stringify( store ), { EX: 3600 } );
+            return res.status( 200 ).json( store );
       } catch (e) {
             res.status( 500 ).json( { message: "Internal sever error", error: e.message } );
       }
@@ -108,15 +106,17 @@ const getFeatureStores = async ( req, res ) =>
 
 const getStoreCategory = async ( req, res ) =>
 {
-      const skip = +req.query.skip || 0;
-      const category = req.query.category;
-      const cacheKey = `products:category:${ category }:skip:${ skip }`;
+      
       
       try {
+            const skip = +req.query.skip || 0;
+            const category = req.query.category;
+            if ( !category ) return res.status( 400 ).send( "No category provided" );
+            const cacheKey = `products:category:${ category }:skip:${ skip }`;
             const cacheData = await req.redisClient.get( cacheKey );
             if ( cacheData ) return res.status( 200 ).json( JSON.parse( cacheData ) );
             
-            if ( !category ) return res.status( 400 ).send( "No category provided" );
+            
             
             const store = await prisma.merchant.findMany( {
                   where: {
@@ -137,6 +137,7 @@ const getStoreCategory = async ( req, res ) =>
             return res.status(500).json({message:"internal server error", error:e.message})
       }
 }
+
 
 
 module.exports = {getStores,getFeatureStores,getSingleStore,getStoreProduct,getStoreCategory}

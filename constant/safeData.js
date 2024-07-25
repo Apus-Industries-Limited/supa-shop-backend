@@ -27,7 +27,27 @@ const safeMerchant = {
       createdAt: true,
       category: true,
       password: true,
-      refresh_token:true
+      refresh_token: true,
+      ratings: true,
+      reviews:true
 };
 
-module.exports = {safeMerchant,safeUser}
+const productSelect = {
+      id: true,
+      name: true,
+      description: true,
+      price: true,
+      merchantId: true,
+      category: true,
+      dp: true,
+      images: true,
+      quantity: true,
+      isInStock: true,
+      color: true,
+      dimension: true,
+      ratings: true,
+      isFeatured: true,
+      reviews:true
+}
+
+module.exports = {safeMerchant,safeUser, productSelect}

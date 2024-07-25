@@ -94,6 +94,7 @@ app.use( "/verify-mail", verify.router );
 // Route that handles fetching products and stores for user
 app.use( "/product", product.router );
 app.use( "/store", require( "./routes/store" ) )
+app.use('/user', require("./routes/user"))
 // Route that handles authentication for Merchants
 app.use( "/merchant/auth", storecp, merchantAuth.router );
 
@@ -101,10 +102,12 @@ app.use( "/merchant/auth", storecp, merchantAuth.router );
 
 // Routes which requires authorization
 app.use( verifyJwt );
+app.use( '/review', require( "./routes/review") );
 app.use( "/cart", cart.router );
 app.use('/wishlist', require("./routes/wishlist"))
 app.use( '/profile', userCp, require( "./routes/profile" ) )
-app.use("/order",require("./routes/userOrder"))
+app.use( "/order", require( "./routes/userOrder" ) );
+
 
 //This route handles the logic for merchants
 app.use(verifyMerchant)
